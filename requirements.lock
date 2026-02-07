@@ -14,7 +14,7 @@ kiwisolver==1.4.9
     # via matplotlib
 matplotlib==3.10.8
     # via Assimulo (pyproject.toml)
-numpy==1.26.4
+numpy==2.4.2
     # via
     #   Assimulo (pyproject.toml)
     #   contourpy
