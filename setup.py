@@ -197,9 +197,9 @@ class Assimulo_prepare(object):
         self.desThirdParty=dict([(thp,os.path.join(self.curdir,self.build_assimulo_thirdparty,thp)) 
                                           for thp in self.thirdparty_methods])
         # file lists
-        self.fileSrc     = os.listdir("src")
-        self.fileLib     = os.listdir(os.path.join("src","lib"))
-        self.fileSolvers = os.listdir(os.path.join("src","solvers"))
+        self.fileSrc     = os.listdir(os.path.join("src", "assimulo"))
+        self.fileLib     = os.listdir(os.path.join("src", "assimulo","lib"))
+        self.fileSolvers = os.listdir(os.path.join("src", "assimulo","solvers"))
         self.fileExamples= os.listdir("examples")
         self.fileMain    = ["setup.py","README.md","INSTALL","CHANGELOG","MANIFEST.in"]
         self.fileMainIncludes = ["README.md","CHANGELOG", "LICENSE"]
@@ -214,9 +214,9 @@ class Assimulo_prepare(object):
         for pck in self.thirdparty_methods:
             self.create_dir(os.path.join(self.build_assimulo_thirdparty, pck))
         
-        self.copy_all_files(self.fileSrc, "src", self.desSrc)
-        self.copy_all_files(self.fileLib, "src/lib", self.desLib)
-        self.copy_all_files(self.fileSolvers, os.path.join("src", "solvers"), self.desSolvers)
+        self.copy_all_files(self.fileSrc, "src/assimulo", self.desSrc)
+        self.copy_all_files(self.fileLib, "src/assimulo/lib", self.desLib)
+        self.copy_all_files(self.fileSolvers, os.path.join("src", "assimulo", "solvers"), self.desSolvers)
         self.copy_all_files(self.fileExamples, "examples", self.desExamples)
         self.copy_all_files(self.fileMain, None, self.desMain)
         self.copy_all_files(self.fileMainIncludes, None, self.desSrc)
