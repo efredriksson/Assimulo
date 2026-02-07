@@ -65,7 +65,7 @@ parser.add_argument("--extra-fortran-link-flags", help='Extra Fortran link flags
 parser.add_argument("--extra-fortran-link-files", help='Extra Fortran link files (a list enclosed in " ")', default='')
 parser.add_argument("--extra-fortran-compile-flags", help='Extra Fortran compile flags (a list enclosed in " ")', default='--std=legacy')
 parser.add_argument("--version", help='Package version number', default='Default')
-                                       
+                            
 args = parser.parse_known_args()
 version_number_arg = args[0].version
 
