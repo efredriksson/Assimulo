@@ -25,10 +25,9 @@ build-dev-image:
 build: .venv
 	$(call _run, .venv/bin/pip install . \
 	-v -v -v \
-	--config-settings="--global-option=--sundials-home=/usr" \
-	--config-settings="--global-option=--blas-home=/usr/lib/x86_64-linux-gnu" \
-	--config-settings="--global-option=--lapack-home=/usr/lib/x86_64-linux-gnu" \
-	--config-settings="--global-option=--superlu-home=/usr")
+	-Csetup-args=-Dsundials_prefix=/usr \
+	-Csetup-args=-Dsuperlu_prefix=/usr \
+	-Csetup-args=-Dopenmp=true)
 
 test:
 	$(call _run, .venv/bin/pytest)

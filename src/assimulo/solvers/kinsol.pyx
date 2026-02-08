@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+include "sundials.pxi"
 
 import numpy as np
 cimport numpy as np
@@ -35,7 +36,7 @@ IF SUNDIALS_VERSION >= (6,0,0):
 ELSE:
     from sundials_includes cimport N_VDestroy_Serial as N_VDestroy
 
-include "constants.pxi" #Includes the constants (textual include)
+include "../constants.pxi" #Includes the constants (textual include)
 include "../lib/sundials_constants.pxi" #Sundials related constants
 include "../lib/sundials_callbacks.pxi"
 include "../lib/sundials_callbacks_kinsol.pxi"

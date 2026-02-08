@@ -24,7 +24,7 @@ import scipy.sparse as sps
 from assimulo.explicit_ode cimport Explicit_ODE
 from assimulo.exception import AssimuloException
 
-include "constants.pxi" #Includes the constants (textual include)
+include "../constants.pxi" #Includes the constants (textual include)
 
 cdef class ImplicitEuler(Explicit_ODE):
     """

@@ -1,0 +1,7 @@
+option('sundials_prefix', type: 'string', value: '', description: 'Prefix where SUNDIALS is installed (e.g. /usr, /opt/sundials)')
+option('superlu_prefix',  type: 'string', value: '', description: 'Prefix where SuperLU_MT is installed (e.g. /usr, /opt/superlu)')
+
+option('openmp', type: 'boolean', value: true, description: 'Enable OpenMP flags/deps')
+
+# f2py/Fortran modules (experimental in this first Meson pass)
+option('enable_fortran', type: 'boolean', value: true, description: 'Build f2py-based Fortran solver extension modules')

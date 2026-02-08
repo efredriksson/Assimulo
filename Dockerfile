@@ -16,12 +16,16 @@ RUN apt update && apt install -y \
 # System tooling
 # ------------------------------------------------------------
 RUN apt-get update && apt-get install -y \
-    cmake \
     git \
     curl \
     liblapack-dev \
     libsuitesparse-dev \
     libhypre-dev \
+    cmake \
+    build-essential \
+    gfortran \
+    pkg-config \
+    ninja-build \
     && rm -rf /var/lib/apt/lists/*
 RUN cp -v /usr/lib/x86_64-linux-gnu/libblas.so \
           /usr/lib/x86_64-linux-gnu/libblas_OPENMP.so
