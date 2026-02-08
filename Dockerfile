@@ -70,6 +70,7 @@ RUN mkdir build
 WORKDIR /tmp/sundials/build
 
 RUN cmake \
+    -LAH \
     -DSUPERLUMT_BLAS_LIBRARIES=blas \
     -DSUPERLUMT_LIBRARIES=blas \
     -DSUPERLUMT_INCLUDE_DIR=/usr/include \
@@ -77,9 +78,9 @@ RUN cmake \
     -DSUPERLUMT_THREAD_TYPE=OpenMP \
     -DSUPERLUMT_ENABLE=ON \
     -DLAPACK_ENABLE=ON \
-    -DBUILD_STATIC_LIBS=OFF \
     -DEXAMPLES_ENABLE=OFF \
     -DEXAMPLES_ENABLE_C=OFF \
+    -DBUILD_STATIC_LIBS=ON \
     -DSUNDIALS_INDEX_SIZE=32 \
     -DCMAKE_INSTALL_PREFIX=/usr \
     .. && \

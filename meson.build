@@ -106,23 +106,23 @@ message('Detected SUNDIALS major=' + sundials_major.to_string() + ' version_tupl
 
 # SUNDIALS libs (assumes modern SUNDIALS; matches your Docker SUNDIALS 7.x)
 sundials_libs = [
-  cc.find_library('sundials_cvodes', dirs: sundials_libdirs, required: true),
-  cc.find_library('sundials_idas', dirs: sundials_libdirs, required: true),
-  cc.find_library('sundials_kinsol', dirs: sundials_libdirs, required: true),
-  cc.find_library('sundials_nvecserial', dirs: sundials_libdirs, required: true),
+  cc.find_library('sundials_cvodes', dirs: sundials_libdirs, static: true, required: true),
+  cc.find_library('sundials_idas', dirs: sundials_libdirs, static: true, required: true),
+  cc.find_library('sundials_kinsol', dirs: sundials_libdirs, static: true, required: true),
+  cc.find_library('sundials_nvecserial', dirs: sundials_libdirs, static: true, required: true),
 ]
 
 # SUNDIALS 3+ components
 sundials_libs += [
-  cc.find_library('sundials_sunlinsoldense', dirs: sundials_libdirs, required: true),
-  cc.find_library('sundials_sunlinsolspgmr', dirs: sundials_libdirs, required: true),
-  cc.find_library('sundials_sunmatrixdense', dirs: sundials_libdirs, required: true),
-  cc.find_library('sundials_sunmatrixsparse', dirs: sundials_libdirs, required: true),
+  cc.find_library('sundials_sunlinsoldense', dirs: sundials_libdirs, static: true, required: true),
+  cc.find_library('sundials_sunlinsolspgmr', dirs: sundials_libdirs, static: true, required: true),
+  cc.find_library('sundials_sunmatrixdense', dirs: sundials_libdirs, static: true, required: true),
+  cc.find_library('sundials_sunmatrixsparse', dirs: sundials_libdirs, static: true, required: true),
 ]
 
 # SUNDIALS 7+ has sundials_core
 if sundials_major >= 7
-  sundials_libs += [cc.find_library('sundials_core', dirs: sundials_libdirs, required: true)]
+  sundials_libs += [cc.find_library('sundials_core', dirs: sundials_libdirs, static: true, required: true)]
 endif
 
 # --- SuperLU detection (optional; used by radau5ode + possibly sundials superlu solver) ---
@@ -230,7 +230,7 @@ py.extension_module(
 
 # radau5ode (Cython + C sources, optional SuperLU)
 radau5_c_args = common_c_args + ['-I' + sundials_incdir, '-I' + join_paths(meson.current_source_dir(), 'thirdparty', 'radau5')]
-radau5_link_with = [cc.find_library('m', required: true)]
+radau5_link_with = [cc.find_library('m', static: true, required: true)]
 
 radau5_extra_sources = [
   'thirdparty/radau5/radau5.c',
@@ -246,11 +246,11 @@ if with_superlu
   ]
 
   # Try to find SuperLU_MT and BLAS (and optionally a blas_OPENMP compatibility lib)
-  superlu_mt = cc.find_library('superlu_mt_OPENMP', dirs: superlu_libdirs, required: true)
+  superlu_mt = cc.find_library('superlu_mt_OPENMP', dirs: superlu_libdirs, static: true, required: true)
   radau5_link_with += [superlu_mt]
 
-  blas_openmp = cc.find_library('blas_OPENMP', dirs: default_lib_candidates, required: false)
-  blas = cc.find_library('blas', dirs: default_lib_candidates, required: true)
+  blas_openmp = cc.find_library('blas_OPENMP', dirs: default_lib_candidates, static: true, required: false)
+  blas = cc.find_library('blas', dirs: default_lib_candidates, static: true, required: true)
   if blas_openmp.found()
     radau5_link_with += [blas_openmp]
   endif
