@@ -1,4 +1,4 @@
-.PHONY: build build-dev-image test shell
+.PHONY: build wheel build-dev-image test shell
 DOCKER_IMAGE := assimulo-dev
 IN_DOCKER_IMG := $(shell test -f /.dockerenv && echo 1 || echo 0)
 
@@ -28,6 +28,15 @@ build: .venv
 	-Csetup-args=-Dsundials_prefix=/usr \
 	-Csetup-args=-Dsuperlu_prefix=/usr \
 	-Csetup-args=-Dopenmp=true)
+
+wheel: .venv
+	$(call _run, .venv/bin/pip wheel . \
+	-v -v -v \
+	--no-deps \
+	-Csetup-args=-Dsundials_prefix=/usr \
+	-Csetup-args=-Dsuperlu_prefix=/usr \
+	-Csetup-args=-Dopenmp=true \
+	-w dist)
 
 test:
 	$(call _run, .venv/bin/pytest)
