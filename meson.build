@@ -321,6 +321,12 @@ fortran_solvers = [
     ],
     'extra_args': ['--f77flags="-fdefault-double-8 -fdefault-real-8"'],
   },
+  {
+    'name': 'glimda',
+    'subdir': 'glimda',
+    'sources': ['glimda_complete.pyf', 'glimda_complete.f'],
+    'extra_args': ['--dep', 'blas', '--dep', 'lapack'],
+  }
 ]
 
 # --- f2py / Fortran solver modules (first attempt) ---
