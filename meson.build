@@ -274,6 +274,55 @@ py.extension_module(
   install: true
 )
 
+fortran_solvers = [
+  {
+    'name': 'dopri5',
+    'subdir': 'hairer',
+    'sources': ['dopri5.f', 'dopri5.pyf'],
+  },
+  {
+    'name': 'rodas',
+    'subdir': 'hairer',
+    'sources': ['rodas_decsol.f', 'rodas_decsol.pyf'],
+  },
+  {
+    'name': 'radau5',
+    'subdir': 'hairer',
+    'sources': ['radau_decsol.pyf', 'radau_decsol.f'],
+  },
+  {
+    'name': 'radar5',
+    'subdir': 'hairer',
+    'sources': [
+      'contr5.f90', 'radar5_int.f90', 'radar5.f90', 'dontr5.f90',
+      'decsol.f90', 'dc_decdel.f90', 'radar5.pyf',
+    ],
+  },
+  {
+    'name': 'odepack',
+    'subdir': 'odepack',
+    'sources': ['opkdmain.f', 'opkda1.f', 'opkda2.f', 'odepack_aux.f90', 'odepack.pyf'],
+  },
+  {
+    'name': 'odassl',
+    'subdir': 'odassl',
+    'sources': [
+      'odassl.pyf', 'odassl.f', 'odastp.f', 'odacor.f', 'odajac.f', 'd1mach.f',
+      'daxpy.f', 'ddanrm.f',  'ddatrp.f', 'ddot.f', 'ddwats.f', 'dgefa.f', 'dgesl.f',
+      'dscal.f', 'idamax.f', 'xerrwv.f',
+    ],
+  },
+  {
+    'name': 'dasp3dp',
+    'subdir': 'dasp3',
+    'sources': [
+      'dasp3dp.pyf', 'DASP3.f', 'ANORM.f', 'CTRACT.f', 'DECOMP.f', 'HMAX.f', 'INIVAL.f',
+      'JACEST.f', 'PDERIV.f', 'PREPOL.f', 'SOLVE.f', 'SPAPAT.f',
+    ],
+    'extra_args': ['--f77flags="-fdefault-double-8 -fdefault-real-8"'],
+  },
+]
+
 # --- f2py / Fortran solver modules (first attempt) ---
 # This is intentionally "best effort" in the first conversion pass; can be toggled off.
 if get_option('enable_fortran')
@@ -283,20 +332,27 @@ if get_option('enable_fortran')
     check: true
   ).stdout().strip()
 
-  # Example: dopri5
-  dopri5 = custom_target(
-    'f2py_dopri5',
-    output: 'dopri5' + ext_suffix,
-    install_dir: join_paths(py.get_install_dir(), 'assimulo/lib'),
-    install: true,
-    command: [
-      py, '-m', 'numpy.f2py',
-      '-c',
-      '-m', 'dopri5',
-      join_paths(meson.current_source_dir(), 'thirdparty', 'hairer', 'dopri5.pyf'),
-      join_paths(meson.current_source_dir(), 'thirdparty', 'hairer', 'dopri5.f'),
-    ],
-    console: true,
-    build_by_default: true
-  )
+  foreach solver : fortran_solvers
+    
+    f2py_fc_args = ['--fcompiler=gnu95', '--f77flags=--std=legacy'] + solver.get('extra_args', [])
+    
+    solver_srcs = []
+    solver_src_dir = join_paths(meson.current_source_dir(), 'thirdparty', solver['subdir'])
+    foreach f : solver['sources']
+      solver_srcs += join_paths(solver_src_dir, f)
+    endforeach
+
+    solver_name = solver['name']
+    custom_target(
+      'f2py_' + solver_name,
+      output: solver_name + ext_suffix,
+      install_dir: join_paths(py.get_install_dir(), 'assimulo/lib'),
+      install: true,
+      command: [
+        py, '-m', 'numpy.f2py', '-c', '-m', solver_name,
+      ] + solver_srcs + f2py_fc_args,
+      console: true,
+      build_by_default: true
+    )
+  endforeach
 endif
