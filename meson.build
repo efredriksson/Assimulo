@@ -287,15 +287,16 @@ if get_option('enable_fortran')
   dopri5 = custom_target(
     'f2py_dopri5',
     output: 'dopri5' + ext_suffix,
-    install_dir: join_paths(py.get_install_dir(), 'assimulo', 'lib'),
+    install_dir: join_paths(py.get_install_dir(), 'assimulo/lib'),
+    install: true,
     command: [
       py, '-m', 'numpy.f2py',
       '-c',
       '-m', 'dopri5',
       join_paths(meson.current_source_dir(), 'thirdparty', 'hairer', 'dopri5.pyf'),
       join_paths(meson.current_source_dir(), 'thirdparty', 'hairer', 'dopri5.f'),
-      '--quiet',
     ],
+    console: true,
     build_by_default: true
   )
 endif
