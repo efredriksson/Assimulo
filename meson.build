@@ -30,7 +30,7 @@ omp_dep = dependency('openmp', required: get_option('openmp'))
 
 # --- Install pure python package tree ---
 # After `git mv src assimulo`, this installs assimulo/** into site-packages/assimulo/**
-install_subdir('assimulo', install_dir: py.get_install_dir())
+install_subdir('src/assimulo', install_dir: py.get_install_dir())
 
 # Generate assimulo/version.txt like setup.py did
 #configure_file(
@@ -153,17 +153,17 @@ endif
 # --- Cython targets ---
 cython_include_dirs = [
   '-I', meson.current_build_dir(),
-  '-I', join_paths(meson.current_source_dir(), 'assimulo'),
-  '-I', join_paths(meson.current_source_dir(), 'assimulo/lib'),
+  '-I', join_paths(meson.current_source_dir(), 'src/assimulo'),
+  '-I', join_paths(meson.current_source_dir(), 'src/assimulo/lib'),
 ]
 cython_common_args = ['-3', '-X', 'language_level=3str'] + cython_include_dirs
 
 # Core modules in assimulo/
 py.extension_module(
   'explicit_ode',
-  sources: ['assimulo/explicit_ode.pyx', 'assimulo/ode_event_locator.c'],
+  sources: ['src/assimulo/explicit_ode.pyx', 'src/assimulo/ode_event_locator.c'],
   subdir: 'assimulo',
-  include_directories: include_directories('assimulo'),
+  include_directories: include_directories('src/assimulo'),
   c_args: common_c_args,
   dependencies: [],
   install: true
@@ -172,9 +172,9 @@ py.extension_module(
 foreach mod : ['algebraic', 'implicit_ode', 'ode', 'problem', 'special_systems', 'support']
   py.extension_module(
     mod,
-    sources: ['assimulo/' + mod + '.pyx'],
+    sources: ['src/assimulo/' + mod + '.pyx'],
     subdir: 'assimulo',
-    include_directories: include_directories('assimulo'),
+    include_directories: include_directories('src/assimulo'),
     c_args: common_c_args,
     dependencies: [],
     install: true
@@ -184,9 +184,9 @@ endforeach
 # Euler solver
 py.extension_module(
   'euler',
-  sources: ['assimulo/solvers/euler.pyx'],
+  sources: ['src/assimulo/solvers/euler.pyx'],
   subdir: 'assimulo/solvers',
-  include_directories: include_directories('assimulo', 'assimulo/solvers'),
+  include_directories: include_directories('src/assimulo', 'src/assimulo/solvers'),
   c_args: common_c_args,
   dependencies: [],
   install: true
@@ -199,7 +199,7 @@ sundials_conf.set('SUNDIALS_VECTOR_SIZE', sundials_vector_size)
 sundials_conf.set('SUNDIALS_CVODE_RTOL_VEC', sundials_cvode_rtol_vec)
 
 sundials_pxi = configure_file(
-  input: 'assimulo/sundials.pxi.in',
+  input: 'src/assimulo/sundials.pxi.in',
   output: 'sundials.pxi',
   install_dir: '.',
   configuration: sundials_conf,
@@ -208,9 +208,9 @@ sundials_pxi = configure_file(
 
 py.extension_module(
   'sundials',
-  sources: ['assimulo/solvers/sundials.pyx', sundials_pxi],
+  sources: ['src/assimulo/solvers/sundials.pyx', sundials_pxi],
   subdir: 'assimulo/solvers',
-  include_directories: include_directories('assimulo', 'assimulo/lib'),
+  include_directories: include_directories('src/assimulo', 'src/assimulo/lib'),
   c_args: common_c_args + ['-I' + sundials_incdir],
   dependencies: [omp_dep] + sundials_libs,
   cython_args: cython_common_args,
@@ -219,9 +219,9 @@ py.extension_module(
 
 py.extension_module(
   'kinsol',
-  sources: ['assimulo/solvers/kinsol.pyx', sundials_pxi],
+  sources: ['src/assimulo/solvers/kinsol.pyx', sundials_pxi],
   subdir: 'assimulo/solvers',
-  include_directories: include_directories('assimulo', 'assimulo/lib'),
+  include_directories: include_directories('src/assimulo', 'src/assimulo/lib'),
   c_args: common_c_args + ['-I' + sundials_incdir],
   dependencies: [omp_dep] + sundials_libs,
   cython_args: cython_common_args,
@@ -267,7 +267,7 @@ py.extension_module(
   'radau5ode',
   sources: ['thirdparty/radau5/radau5ode.pyx'] + radau5_extra_sources,
   subdir: 'assimulo/lib',
-  include_directories: include_directories('assimulo', 'assimulo/lib'),
+  include_directories: include_directories('src/assimulo', 'src/assimulo/lib'),
   c_args: radau5_c_args,
   dependencies: [omp_dep] + radau5_link_with,
   cython_args: cython_common_args,
