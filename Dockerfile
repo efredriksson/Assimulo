@@ -41,22 +41,17 @@ RUN cmake -S /tmp/superlu_mt-4.0.1 -B /tmp/superlu_mt-4.0.1/build \
 # ------------------------------------------------------------
 # SUNDIALS
 # ------------------------------------------------------------
-ARG SUNDIALS_VERSION=7.1.1
+ARG SUNDIALS_VERSION=2.7.0-3
 
-RUN git clone --depth 1 -b v${SUNDIALS_VERSION} https://github.com/LLNL/sundials /tmp/sundials
+RUN git clone --depth 1 -b v${SUNDIALS_VERSION} https://github.com/modelon-community/sundials /tmp/sundials
 
-# Patch for SUNDIALS 2.7.0
-RUN if [ "${SUNDIALS_VERSION}" = "2.7.0" ]; then \
-      echo "target_link_libraries(sundials_idas_shared lapack blas superlu_mt_OPENMP)" \
-        >> /tmp/sundials/src/idas/CMakeLists.txt && \
-      echo "target_link_libraries(sundials_kinsol_shared lapack blas superlu_mt_OPENMP)" \
-        >> /tmp/sundials/src/kinsol/CMakeLists.txt ; \
-    fi
+# Link idas and kinsol against superlu_mt so they can use the sparse linear solver
+RUN echo "target_link_libraries(sundials_idas_shared lapack blas superlu_mt_OPENMP)" \
+      >> /tmp/sundials/src/idas/CMakeLists.txt && \
+    echo "target_link_libraries(sundials_kinsol_shared lapack blas superlu_mt_OPENMP)" \
+      >> /tmp/sundials/src/kinsol/CMakeLists.txt
 
 RUN cmake -S /tmp/sundials -B /tmp/sundials/build \
-    -LAH \
-    -DSUPERLUMT_BLAS_LIBRARIES=blas \
-    -DSUPERLUMT_LIBRARIES=blas \
     -DSUPERLUMT_INCLUDE_DIR=/usr/include \
     -DSUPERLUMT_LIBRARY=/usr/lib/libsuperlu_mt_OPENMP.a \
     -DSUPERLUMT_THREAD_TYPE=OpenMP \
@@ -65,7 +60,7 @@ RUN cmake -S /tmp/sundials -B /tmp/sundials/build \
     -DEXAMPLES_ENABLE=OFF \
     -DEXAMPLES_ENABLE_C=OFF \
     -DBUILD_STATIC_LIBS=ON \
-    -DSUNDIALS_INDEX_SIZE=32 \
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DCMAKE_INSTALL_PREFIX=/usr \
     && make -C /tmp/sundials/build -j$(nproc) \
     && make -C /tmp/sundials/build install \
