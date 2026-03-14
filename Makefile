@@ -1,4 +1,4 @@
-.PHONY: build wheel build-dev-image test shell
+.PHONY: build wheel build-dev-image test shell compile-deps
 DOCKER_IMAGE := assimulo-dev
 IN_DOCKER_IMG := $(shell test -f /.dockerenv && echo 1 || echo 0)
 
@@ -38,8 +38,13 @@ wheel: .venv
 	-Csetup-args=-Dopenmp=true \
 	-w dist)
 
-test:
+test: .venv
 	$(call _run, .venv/bin/pytest)
 
 shell:
 	$(call _run, /bin/bash, -it)
+
+compile-deps:
+	$(call _run, python3 -m venv .venv)
+	$(call _run, .venv/bin/pip install pip-tools)
+	$(call _run, .venv/bin/pip-compile --extra=dev --output-file=requirements.lock pyproject.toml)
