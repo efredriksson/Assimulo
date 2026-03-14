@@ -925,8 +925,8 @@
                                    RPAR 
       INTEGER, dimension(1), intent(in) ::  &
                                    IPAR,IPAST 
-      REAL(kind=DP), dimension(1), intent(in) ::  &
-                                   GRID 
+      REAL(kind=DP), dimension(1), intent(inout) ::  &
+                                   GRID
       REAL(kind=DP), dimension(:,:), allocatable :: & 
                                    FJACL,XLAG 
       REAL(kind=DP), dimension(:), allocatable :: &
