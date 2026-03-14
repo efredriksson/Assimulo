@@ -1,32 +1,22 @@
-FROM ubuntu:latest
+FROM ubuntu:24.04
 
 # ------------------------------------------------------------
-# Python system level tooling
+# System tooling and Python
 # ------------------------------------------------------------
-RUN apt update && apt install -y \
+RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     python3-dev \
     python3-venv \
-    python3-setuptools \
-    python3-wheel && \
-    python3 -m pip install --break-system-packages pip-tools
-
-# ------------------------------------------------------------
-# System tooling
-# ------------------------------------------------------------
-RUN apt-get update && apt-get install -y \
     git \
     curl \
     liblapack-dev \
-    libsuitesparse-dev \
-    libhypre-dev \
     cmake \
     build-essential \
     gfortran \
     pkg-config \
-    ninja-build \
     && rm -rf /var/lib/apt/lists/*
+
 RUN cp -v /usr/lib/x86_64-linux-gnu/libblas.so \
           /usr/lib/x86_64-linux-gnu/libblas_OPENMP.so
 
@@ -37,39 +27,33 @@ WORKDIR /tmp
 RUN curl -fSsL https://github.com/xiaoyeli/superlu_mt/archive/refs/tags/v4.0.1.tar.gz \
     | tar xz
 
-WORKDIR /tmp/superlu_mt-4.0.1
-RUN cmake \
+RUN cmake -S /tmp/superlu_mt-4.0.1 -B /tmp/superlu_mt-4.0.1/build \
     -Denable_examples=OFF \
     -Denable_tests=OFF \
     -DPLAT="_OPENMP" \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DCMAKE_INSTALL_LIBDIR=lib \
     -DSUPERLUMT_INSTALL_INCLUDEDIR=include \
-    . && \
-    make -j4 && \
-    make install
+    && make -C /tmp/superlu_mt-4.0.1/build -j$(nproc) \
+    && make -C /tmp/superlu_mt-4.0.1/build install \
+    && rm -rf /tmp/superlu_mt-4.0.1
 
 # ------------------------------------------------------------
 # SUNDIALS
 # ------------------------------------------------------------
 ARG SUNDIALS_VERSION=7.1.1
 
-WORKDIR /tmp
-RUN git clone --depth 1 -b v${SUNDIALS_VERSION} https://github.com/LLNL/sundials sundials
+RUN git clone --depth 1 -b v${SUNDIALS_VERSION} https://github.com/LLNL/sundials /tmp/sundials
 
-WORKDIR /tmp/sundials
 # Patch for SUNDIALS 2.7.0
 RUN if [ "${SUNDIALS_VERSION}" = "2.7.0" ]; then \
       echo "target_link_libraries(sundials_idas_shared lapack blas superlu_mt_OPENMP)" \
-        >> src/idas/CMakeLists.txt && \
+        >> /tmp/sundials/src/idas/CMakeLists.txt && \
       echo "target_link_libraries(sundials_kinsol_shared lapack blas superlu_mt_OPENMP)" \
-        >> src/kinsol/CMakeLists.txt ; \
+        >> /tmp/sundials/src/kinsol/CMakeLists.txt ; \
     fi
 
-RUN mkdir build
-WORKDIR /tmp/sundials/build
-
-RUN cmake \
+RUN cmake -S /tmp/sundials -B /tmp/sundials/build \
     -LAH \
     -DSUPERLUMT_BLAS_LIBRARIES=blas \
     -DSUPERLUMT_LIBRARIES=blas \
@@ -83,9 +67,9 @@ RUN cmake \
     -DBUILD_STATIC_LIBS=ON \
     -DSUNDIALS_INDEX_SIZE=32 \
     -DCMAKE_INSTALL_PREFIX=/usr \
-    .. && \
-    make -j4 && \
-    make install
+    && make -C /tmp/sundials/build -j$(nproc) \
+    && make -C /tmp/sundials/build install \
+    && rm -rf /tmp/sundials
 
 # ------------------------------------------------------------
 # Final image state
