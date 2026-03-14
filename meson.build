@@ -39,7 +39,7 @@ sundials_prefix = get_option('sundials_prefix')
 superlu_prefix  = get_option('superlu_prefix')
 
 default_inc_candidates = ['/usr/include', '/usr/local/include']
-default_lib_candidates = ['/usr/lib', '/usr/local/lib', '/usr/lib/x86_64-linux-gnu', '/usr/local/lib/x86_64-linux-gnu']
+default_lib_candidates = ['/usr/lib', '/usr/lib64', '/usr/local/lib', '/usr/lib/x86_64-linux-gnu', '/usr/local/lib/x86_64-linux-gnu']
 
 sundials_inc_candidates = []
 sundials_lib_candidates = []
@@ -291,7 +291,7 @@ fortran_solvers = [
       'dasp3dp.pyf', 'DASP3.f', 'ANORM.f', 'CTRACT.f', 'DECOMP.f', 'HMAX.f', 'INIVAL.f',
       'JACEST.f', 'PDERIV.f', 'PREPOL.f', 'SOLVE.f', 'SPAPAT.f',
     ],
-    'extra_args': ['--f77flags="-fdefault-double-8 -fdefault-real-8"'],
+    'extra_args': [],
   },
   {
     'name': 'glimda',
