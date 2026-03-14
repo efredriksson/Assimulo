@@ -16,14 +16,16 @@ numpy_inc = run_command(
 ).stdout().strip()
 
 # --- Common flags ---
+# numpy_inc is passed via -I because it may live inside the source tree (e.g. in a
+# local venv), which meson's include_directories() disallows for absolute paths.
 common_c_args = ['-fno-strict-aliasing', '-I' + numpy_inc]
-common_link_args = []
 
 if get_option('debug')
   common_c_args += ['-g']
-  common_link_args += ['-g']
+  common_link_args = ['-g']
 else
   common_c_args += ['-O2']
+  common_link_args = []
 endif
 
 omp_dep = dependency('openmp', required: get_option('openmp'))
@@ -31,13 +33,6 @@ omp_dep = dependency('openmp', required: get_option('openmp'))
 # --- Install pure python package tree ---
 # After `git mv src assimulo`, this installs assimulo/** into site-packages/assimulo/**
 install_subdir('src/assimulo', install_dir: py.get_install_dir())
-
-# Generate assimulo/version.txt like setup.py did
-#configure_file(
-#  output: 'version.txt',
-#  install: true,
-#  install_dir: join_paths(py.get_install_dir(), 'assimulo')
-#)
 
 # --- Helper: find include/lib dirs from a prefix or from standard locations ---
 sundials_prefix = get_option('sundials_prefix')
@@ -68,6 +63,8 @@ endforeach
 if sundials_incdir == ''
   error('SUNDIALS not found: could not locate cvodes/cvodes.h. Set -Dsundials_prefix=...')
 endif
+
+sundials_inc_dir = include_directories(sundials_incdir)
 
 sundials_libdirs = []
 foreach d : sundials_lib_candidates
@@ -104,26 +101,28 @@ endforeach
 
 message('Detected SUNDIALS major=' + sundials_major.to_string() + ' version_tuple=' + sundials_version_tuple)
 
-# SUNDIALS libs (assumes modern SUNDIALS; matches your Docker SUNDIALS 7.x)
-sundials_libs = [
-  cc.find_library('sundials_cvodes', dirs: sundials_libdirs, static: true, required: true),
-  cc.find_library('sundials_idas', dirs: sundials_libdirs, static: true, required: true),
-  cc.find_library('sundials_kinsol', dirs: sundials_libdirs, static: true, required: true),
+# Shared SUNDIALS infrastructure (nvecserial + optional core)
+sundials_common_libs = [
   cc.find_library('sundials_nvecserial', dirs: sundials_libdirs, static: true, required: true),
 ]
+if sundials_major >= 7
+  sundials_common_libs += [cc.find_library('sundials_core', dirs: sundials_libdirs, static: true, required: true)]
+endif
 
-# SUNDIALS 3+ components
-sundials_libs += [
+# CVodes + IDA (sundials.pyx)
+sundials_cvodes_libs = sundials_common_libs + [
+  cc.find_library('sundials_cvodes', dirs: sundials_libdirs, static: true, required: true),
+  cc.find_library('sundials_idas', dirs: sundials_libdirs, static: true, required: true),
   cc.find_library('sundials_sunlinsoldense', dirs: sundials_libdirs, static: true, required: true),
   cc.find_library('sundials_sunlinsolspgmr', dirs: sundials_libdirs, static: true, required: true),
   cc.find_library('sundials_sunmatrixdense', dirs: sundials_libdirs, static: true, required: true),
   cc.find_library('sundials_sunmatrixsparse', dirs: sundials_libdirs, static: true, required: true),
 ]
 
-# SUNDIALS 7+ has sundials_core
-if sundials_major >= 7
-  sundials_libs += [cc.find_library('sundials_core', dirs: sundials_libdirs, static: true, required: true)]
-endif
+# Kinsol only needs kinsol + nvecserial (+ core on 7+)
+sundials_kinsol_libs = sundials_common_libs + [
+  cc.find_library('sundials_kinsol', dirs: sundials_libdirs, static: true, required: true),
+]
 
 # --- SuperLU detection (optional; used by radau5ode + possibly sundials superlu solver) ---
 with_superlu = false
@@ -201,7 +200,6 @@ sundials_conf.set('SUNDIALS_CVODE_RTOL_VEC', sundials_cvode_rtol_vec)
 sundials_pxi = configure_file(
   input: 'src/assimulo/sundials.pxi.in',
   output: 'sundials.pxi',
-  install_dir: '.',
   configuration: sundials_conf,
   install: false,
 )
@@ -210,9 +208,9 @@ py.extension_module(
   'sundials',
   sources: ['src/assimulo/solvers/sundials.pyx', sundials_pxi],
   subdir: 'assimulo/solvers',
-  include_directories: include_directories('src/assimulo', 'src/assimulo/lib'),
-  c_args: common_c_args + ['-I' + sundials_incdir],
-  dependencies: [omp_dep] + sundials_libs,
+  include_directories: [include_directories('src/assimulo', 'src/assimulo/lib'), sundials_inc_dir],
+  c_args: common_c_args,
+  dependencies: [omp_dep] + sundials_cvodes_libs,
   cython_args: cython_common_args,
   install: true
 )
@@ -221,16 +219,21 @@ py.extension_module(
   'kinsol',
   sources: ['src/assimulo/solvers/kinsol.pyx', sundials_pxi],
   subdir: 'assimulo/solvers',
-  include_directories: include_directories('src/assimulo', 'src/assimulo/lib'),
-  c_args: common_c_args + ['-I' + sundials_incdir],
-  dependencies: [omp_dep] + sundials_libs,
+  include_directories: [include_directories('src/assimulo', 'src/assimulo/lib'), sundials_inc_dir],
+  c_args: common_c_args,
+  dependencies: [omp_dep] + sundials_kinsol_libs,
   cython_args: cython_common_args,
   install: true
 )
 
 # radau5ode (Cython + C sources, optional SuperLU)
-radau5_c_args = common_c_args + ['-I' + sundials_incdir, '-I' + join_paths(meson.current_source_dir(), 'thirdparty', 'radau5')]
-radau5_link_with = [cc.find_library('m', static: true, required: true)]
+radau5_inc_dirs = [
+  include_directories('src/assimulo', 'src/assimulo/lib'),
+  sundials_inc_dir,
+  include_directories('thirdparty/radau5'),
+]
+radau5_c_args = common_c_args
+radau5_deps = [omp_dep, cc.find_library('m', required: true)]
 
 radau5_extra_sources = [
   'thirdparty/radau5/radau5.c',
@@ -238,7 +241,8 @@ radau5_extra_sources = [
 ]
 
 if with_superlu
-  radau5_c_args += ['-I' + superlu_incdir, '-D__RADAU5_WITH_SUPERLU']
+  radau5_c_args += ['-D__RADAU5_WITH_SUPERLU']
+  radau5_inc_dirs += [include_directories(superlu_incdir)]
   radau5_extra_sources += [
     'thirdparty/radau5/superlu_double.c',
     'thirdparty/radau5/superlu_complex.c',
@@ -247,19 +251,19 @@ if with_superlu
 
   # Try to find SuperLU_MT and BLAS (and optionally a blas_OPENMP compatibility lib)
   superlu_mt = cc.find_library('superlu_mt_OPENMP', dirs: superlu_libdirs, static: true, required: true)
-  radau5_link_with += [superlu_mt]
+  radau5_deps += [superlu_mt]
 
   blas_openmp = cc.find_library('blas_OPENMP', dirs: default_lib_candidates, static: true, required: false)
   blas = cc.find_library('blas', dirs: default_lib_candidates, static: true, required: true)
   if blas_openmp.found()
-    radau5_link_with += [blas_openmp]
+    radau5_deps += [blas_openmp]
   endif
-  radau5_link_with += [blas]
+  radau5_deps += [blas]
 
   # gomp is typically needed when linking OpenMP with gcc
   gomp = cc.find_library('gomp', required: false)
   if gomp.found()
-    radau5_link_with += [gomp]
+    radau5_deps += [gomp]
   endif
 endif
 
@@ -267,9 +271,9 @@ py.extension_module(
   'radau5ode',
   sources: ['thirdparty/radau5/radau5ode.pyx'] + radau5_extra_sources,
   subdir: 'assimulo/lib',
-  include_directories: include_directories('src/assimulo', 'src/assimulo/lib'),
+  include_directories: radau5_inc_dirs,
   c_args: radau5_c_args,
-  dependencies: [omp_dep] + radau5_link_with,
+  dependencies: radau5_deps,
   cython_args: cython_common_args,
   install: true
 )
@@ -339,9 +343,9 @@ if get_option('enable_fortran')
   ).stdout().strip()
 
   foreach solver : fortran_solvers
-    
+
     f2py_fc_args = ['--fcompiler=gnu95', '--f77flags=--std=legacy'] + solver.get('extra_args', [])
-    
+
     solver_srcs = []
     solver_src_dir = join_paths(meson.current_source_dir(), 'thirdparty', solver['subdir'])
     foreach f : solver['sources']

@@ -22,4 +22,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.4",
+    "meson>=1.4",
+    "ninja",
+    "Cython>=3.0.7",
 ]

@@ -1,4 +1,4 @@
-.PHONY: build wheel build-dev-image test shell compile-deps
+.PHONY: build wheel build-dev-image test shell compile-deps configure
 DOCKER_IMAGE := assimulo-dev
 IN_DOCKER_IMG := $(shell test -f /.dockerenv && echo 1 || echo 0)
 
@@ -43,6 +43,9 @@ test: .venv
 
 shell:
 	$(call _run, /bin/bash, -it)
+
+configure: .venv
+	$(call _run, bash -c '. .venv/bin/activate && meson setup builddir -Dsundials_prefix=/usr -Dsuperlu_prefix=/usr -Dopenmp=true --wipe')
 
 compile-deps:
 	$(call _run, python3 -m venv .venv)
