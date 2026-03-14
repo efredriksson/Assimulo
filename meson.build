@@ -73,16 +73,16 @@ foreach d : sundials_lib_candidates
   endif
 endforeach
 
-# SUNDIALS 2.7.0 libraries
+# SUNDIALS 2.7.0 libraries — prefer shared so extensions don't duplicate the code
 sundials_cvodes_libs = [
-  cc.find_library('sundials_cvodes',     dirs: sundials_libdirs, static: true, required: true),
-  cc.find_library('sundials_idas',       dirs: sundials_libdirs, static: true, required: true),
-  cc.find_library('sundials_nvecserial', dirs: sundials_libdirs, static: true, required: true),
+  cc.find_library('sundials_cvodes',     dirs: sundials_libdirs, required: true),
+  cc.find_library('sundials_idas',       dirs: sundials_libdirs, required: true),
+  cc.find_library('sundials_nvecserial', dirs: sundials_libdirs, required: true),
 ]
 
 sundials_kinsol_libs = [
-  cc.find_library('sundials_kinsol',     dirs: sundials_libdirs, static: true, required: true),
-  cc.find_library('sundials_nvecserial', dirs: sundials_libdirs, static: true, required: true),
+  cc.find_library('sundials_kinsol',     dirs: sundials_libdirs, required: true),
+  cc.find_library('sundials_nvecserial', dirs: sundials_libdirs, required: true),
 ]
 
 # --- SuperLU detection (optional; used by radau5ode + possibly sundials superlu solver) ---
@@ -110,15 +110,9 @@ if superlu_prefix != ''
   endif
 endif
 
-# When SUNDIALS is compiled with SuperLU the solver .a files reference SuperLU
-# symbols, so the Python extensions must also link against superlu_mt and blas.
-sundials_superlu_deps = []
-if with_superlu
-  sundials_superlu_deps += [
-    cc.find_library('superlu_mt_OPENMP', dirs: superlu_libdirs, static: true, required: true),
-    cc.find_library('blas', dirs: default_lib_candidates, static: true, required: true),
-  ]
-endif
+# With shared SUNDIALS libs, SuperLU and BLAS are embedded in the shared libs
+# themselves (via target_link_libraries in the Dockerfiles), so extensions do
+# not need to link against them separately.
 
 # --- Cython targets ---
 cython_include_dirs = [
@@ -178,7 +172,7 @@ py.extension_module(
   subdir: 'assimulo/solvers',
   include_directories: [include_directories('src/assimulo', 'src/assimulo/lib'), sundials_inc_dir],
   c_args: common_c_args,
-  dependencies: [omp_dep] + sundials_cvodes_libs + sundials_superlu_deps,
+  dependencies: [omp_dep] + sundials_cvodes_libs,
   cython_args: cython_common_args,
   install: true
 )
@@ -189,7 +183,7 @@ py.extension_module(
   subdir: 'assimulo/solvers',
   include_directories: [include_directories('src/assimulo', 'src/assimulo/lib'), sundials_inc_dir],
   c_args: common_c_args,
-  dependencies: [omp_dep] + sundials_kinsol_libs + sundials_superlu_deps,
+  dependencies: [omp_dep] + sundials_kinsol_libs,
   cython_args: cython_common_args,
   install: true
 )

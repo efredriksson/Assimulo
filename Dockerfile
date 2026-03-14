@@ -45,8 +45,10 @@ ARG SUNDIALS_VERSION=2.7.0-3
 
 RUN git clone --depth 1 -b v${SUNDIALS_VERSION} https://github.com/modelon-community/sundials /tmp/sundials
 
-# Link idas and kinsol against superlu_mt so they can use the sparse linear solver
-RUN echo "target_link_libraries(sundials_idas_shared lapack blas superlu_mt_OPENMP)" \
+# Link cvodes, idas and kinsol against superlu_mt so the shared libs are self-contained
+RUN echo "target_link_libraries(sundials_cvodes_shared lapack blas superlu_mt_OPENMP)" \
+      >> /tmp/sundials/src/cvodes/CMakeLists.txt && \
+    echo "target_link_libraries(sundials_idas_shared lapack blas superlu_mt_OPENMP)" \
       >> /tmp/sundials/src/idas/CMakeLists.txt && \
     echo "target_link_libraries(sundials_kinsol_shared lapack blas superlu_mt_OPENMP)" \
       >> /tmp/sundials/src/kinsol/CMakeLists.txt
