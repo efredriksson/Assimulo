@@ -261,19 +261,23 @@ f2py_src = run_command(
 ).stdout().strip()
 fortranobject_c = join_paths(f2py_src, 'fortranobject.c')
 
+# On Windows, BLAS/LAPACK are statically linked (no DLL bundled in the wheel).
+# Default 'reference': small reference impl (libblas.a + liblapack.a from mingw lapack package).
+# Optional 'openblas': fast but adds ~30 MB to glimda.pyd; also requires OpenMP.
+# On Linux, link dynamically against the system-provided shared libraries.
 if host_machine.system() == 'windows'
-  # On Windows, OpenBLAS is statically linked (see build_dependencies_windows.sh).
-  # It covers both BLAS and LAPACK. OpenBLAS DLL is too large to bundle.
-  blas_dep      = cc.find_library('openblas', dirs: default_lib_candidates, static: true, required: true)
-
-  # libopenblas.a is built with OpenMP, so omp_dep must also be linked.
-  glimda_deps   = [blas_dep, omp_dep]
+  if get_option('windows_blas') == 'openblas'
+    blas_dep    = cc.find_library('openblas', dirs: default_lib_candidates, static: true, required: true)
+    glimda_deps = [blas_dep, omp_dep]
+  else
+    blas_dep    = cc.find_library('blas',   dirs: default_lib_candidates, static: true, required: true)
+    lapack_dep  = cc.find_library('lapack', dirs: default_lib_candidates, static: true, required: true)
+    glimda_deps = [blas_dep, lapack_dep]
+  endif
 else
-  # On Linux, link dynamically against the system-provided shared libraries.
-  blas_dep      = cc.find_library('blas',   dirs: default_lib_candidates, required: true)
-  lapack_dep    = cc.find_library('lapack', dirs: default_lib_candidates, required: true)
-
-  glimda_deps   = [blas_dep, lapack_dep]
+  blas_dep    = cc.find_library('blas',   dirs: default_lib_candidates, required: true)
+  lapack_dep  = cc.find_library('lapack', dirs: default_lib_candidates, required: true)
+  glimda_deps = [blas_dep, lapack_dep]
 endif
 fortran_solvers = [
   {

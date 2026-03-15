@@ -5,3 +5,9 @@ option('openmp', type: 'boolean', value: true, description: 'Enable OpenMP flags
 
 # f2py/Fortran modules (experimental in this first Meson pass)
 option('enable_fortran', type: 'boolean', value: true, description: 'Build f2py-based Fortran solver extension modules')
+
+# BLAS/LAPACK backend for glimda on Windows.
+# 'reference' (default): small static reference implementation (libblas.a + liblapack.a).
+# 'openblas': fast static OpenBLAS (libopenblas.a, ~30 MB in glimda.pyd).
+option('windows_blas', type: 'combo', choices: ['reference', 'openblas'], value: 'reference',
+       description: 'BLAS/LAPACK implementation used by glimda on Windows')
