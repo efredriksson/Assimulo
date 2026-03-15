@@ -35,6 +35,14 @@ dev = [
 build = "cp311-* cp312-* cp313-*"
 skip  = "*-win32 *-manylinux_i686 *-musllinux*"
 
+[tool.cibuildwheel.windows]
+# SUNDIALS is built in the GHA workflow (tools/wheels/build_dependencies_windows.sh)
+# using MSYS2 UCRT64 before cibuildwheel runs. MSYS2 bin dirs are added to PATH
+# so meson picks up gcc/gfortran instead of MSVC.
+before-build = "pip install delvewheel"
+repair-wheel-command = "pwsh {project}/tools/wheels/repair_windows.ps1 {wheel} {dest_dir}"
+config-settings = {"setup-args" = ["-Dsundials_prefix=C:/deps", "-Dopenmp=true"]}
+
 [tool.cibuildwheel.linux]
 # Use the pre-built assimulo-manylinux image which has SuperLU + SUNDIALS already
 # compiled (via Dockerfile.manylinux → tools/wheels/build_dependencies.sh).

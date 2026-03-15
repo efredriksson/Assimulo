@@ -18,14 +18,24 @@ numpy_inc = run_command(
 # --- Common flags ---
 # numpy_inc is passed via -I because it may live inside the source tree (e.g. in a
 # local venv), which meson's include_directories() disallows for absolute paths.
-common_c_args = ['-fno-strict-aliasing', '-I' + numpy_inc]
-
-if get_option('debug')
-  common_c_args += ['-g']
-  common_link_args = ['-g']
+if cc.get_argument_syntax() == 'msvc'
+  common_c_args = ['-I' + numpy_inc]
+  if get_option('debug')
+    common_c_args += ['/Zi']
+    common_link_args = ['/DEBUG']
+  else
+    common_c_args += ['/O2']
+    common_link_args = []
+  endif
 else
-  common_c_args += ['-O2']
-  common_link_args = []
+  common_c_args = ['-fno-strict-aliasing', '-I' + numpy_inc]
+  if get_option('debug')
+    common_c_args += ['-g']
+    common_link_args = ['-g']
+  else
+    common_c_args += ['-O2']
+    common_link_args = []
+  endif
 endif
 
 omp_dep = dependency('openmp', required: get_option('openmp'))
@@ -195,7 +205,8 @@ radau5_inc_dirs = [
   include_directories('thirdparty/radau5'),
 ]
 radau5_c_args = common_c_args
-radau5_deps = [omp_dep, cc.find_library('m', required: true)]
+libm = cc.find_library('m', required: host_machine.system() != 'windows')
+radau5_deps = [omp_dep, libm]
 
 radau5_extra_sources = [
   'thirdparty/radau5/radau5.c',
