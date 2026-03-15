@@ -8,12 +8,12 @@ fortran_solvers 'outputs' list in meson.build — typically:
   <modname>-f2pywrappers2.f90 — Fortran 90 shims (radar5 only)
 
 Only the .pyf interface file is passed to f2py; Fortran sources are compiled by
-meson/gfortran directly. f2py is run with -c so it uses the correct numpy 2.x
-code path — the non-c path has a regression that generates empty modules when a
-.pyf contains 'interface  ! in :source' block annotations (as odepack.pyf does).
-A no-op fake meson is put on PATH so that the meson setup/compile steps that -c
-triggers are silently skipped. f2py writes wrapper files directly to outdir via
---build-dir so no copying is needed.
+meson/gfortran directly. f2py is run with -c --backend meson so it uses the
+meson code path on all numpy versions (>=1.26). The non-c path has a regression
+that generates empty modules when a .pyf contains 'interface  ! in :source'
+block annotations (as odepack.pyf does). A no-op fake meson is put on PATH so
+that the meson setup/compile steps that -c triggers are silently skipped. f2py
+writes wrapper files directly to outdir via --build-dir so no copying is needed.
 
 Usage: python3 f2py_wrapper.py <outdir> <modname> <pyf_file>
 """
@@ -51,7 +51,7 @@ def main():
         tmpdir = Path(tmp)
         env = {**os.environ, "PATH": str(fake_meson_dir(tmpdir)) + os.pathsep + os.environ.get("PATH", "")}
         subprocess.run(
-            [sys.executable, "-m", "numpy.f2py", "-m", modname, "--build-dir", outdir, "-c", pyf],
+            [sys.executable, "-m", "numpy.f2py", "-m", modname, "--build-dir", outdir, "--backend", "meson", "-c", pyf],
             cwd=tmpdir,
             env=env,
             check=True,
