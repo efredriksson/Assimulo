@@ -5,21 +5,25 @@
 # Used by both Dockerfile.manylinux (local testing) and cibuildwheel (CI).
 set -eux
 
+# Ensure standard system paths are in PATH (cibuildwheel's before-all
+# environment may have a minimal PATH that omits /usr/bin).
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin${PATH:+:${PATH}}"
+
 SUPERLU_VERSION="4.0.1"
 SUNDIALS_VERSION="2.7.0-3"
 NPROC=$(nproc)
 
 # --- System packages ---
-dnf install -y \
+yum install -y \
     gcc-gfortran \
     lapack-devel \
     lapack-static \
     blas-devel \
     openblas-static \
     cmake
-dnf clean all
+yum clean all
 
-# cmake 4.x rejects SUNDIALS 2.7.0 old CMakeLists.txt. The dnf cmake above installs
+# cmake 4.x rejects SUNDIALS 2.7.0 old CMakeLists.txt. The yum cmake above installs
 # cmake 3.x at /usr/bin/cmake; remove any cmake 4.x that may be at /usr/local/bin.
 rm -f /usr/local/bin/cmake
 cmake --version
