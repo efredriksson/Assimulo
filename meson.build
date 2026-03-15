@@ -50,6 +50,9 @@ superlu_prefix  = get_option('superlu_prefix')
 
 default_inc_candidates = ['/usr/include', '/usr/local/include']
 default_lib_candidates = ['/usr/lib', '/usr/lib64', '/usr/local/lib', '/usr/lib/x86_64-linux-gnu', '/usr/local/lib/x86_64-linux-gnu']
+if host_machine.system() == 'windows'
+  default_lib_candidates += ['C:/mingw64/lib', 'C:/msys64/mingw64/lib']
+endif
 
 sundials_inc_candidates = []
 sundials_lib_candidates = []
@@ -258,8 +261,8 @@ f2py_src = run_command(
 ).stdout().strip()
 fortranobject_c = join_paths(f2py_src, 'fortranobject.c')
 
-blas_dep   = cc.find_library('blas',   dirs: default_lib_candidates, required: false)
-lapack_dep = cc.find_library('lapack', dirs: default_lib_candidates, required: false)
+blas_dep   = cc.find_library('blas',   dirs: default_lib_candidates, required: true)
+lapack_dep = cc.find_library('lapack', dirs: default_lib_candidates, required: true)
 fortran_solvers = [
   {
     'name':         'dopri5',
