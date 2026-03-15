@@ -3,6 +3,6 @@
 # Called by cibuildwheel repair-wheel-command.
 param([string]$Wheel, [string]$DestDir)
 delvewheel repair `
-    --add-path "C:\msys64\ucrt64\bin;C:\deps\bin" `
+    --add-path "C:\msys64\ucrt64\bin;C:\deps\bin;C:\deps\lib" `
     -w $DestDir `
     $Wheel
