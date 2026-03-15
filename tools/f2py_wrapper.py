@@ -30,6 +30,15 @@ def fake_meson_dir(tmpdir: Path) -> Path:
     if sys.platform == "win32":
         meson = tmpdir / "meson.cmd"
         meson.write_text("@python -c \"import sys; sys.exit(0)\" %*\n")
+
+        # On Windows, CreateProcess (used by subprocess without shell=True) only
+        # resolves .exe files, not .cmd. Patch f2py's meson backend to use
+        # shell=True on Windows so cmd.exe finds our fake meson.cmd via PATHEXT.
+        from numpy.f2py._backends._meson import MesonBackend
+        MesonBackend._run_subprocess_command = (
+            lambda self, cmd, cwd: subprocess.run(cmd, cwd=cwd, check=True, shell=True)
+        )
+
     else:
         meson = tmpdir / "meson"
         meson.write_text("#!/usr/bin/env python3\nimport sys; sys.exit(0)\n")
@@ -51,7 +60,8 @@ def main():
         tmpdir = Path(tmp)
         env = {**os.environ, "PATH": str(fake_meson_dir(tmpdir)) + os.pathsep + os.environ.get("PATH", "")}
         subprocess.run(
-            [sys.executable, "-m", "numpy.f2py", "-m", modname, "--build-dir", outdir, "--backend", "meson", "-c", pyf],
+            [sys.executable, "-m", "numpy.f2py", "-m", modname,
+             "--build-dir", str(outdir), "--backend", "meson", "-c", str(pyf)],
             cwd=tmpdir,
             env=env,
             check=True,
