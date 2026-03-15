@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: pip install cibuildwheel==2.22.0
+      - run: pip install cibuildwheel
 
       - name: Build manylinux image (SuperLU + SUNDIALS pre-installed)
         run: docker build -f Dockerfile.manylinux -t assimulo-manylinux .
@@ -72,7 +72,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: pip install cibuildwheel==2.22.0
+      - run: pip install cibuildwheel
         shell: pwsh
 
       - name: Build wheels
