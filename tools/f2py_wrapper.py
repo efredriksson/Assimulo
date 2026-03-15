@@ -30,6 +30,7 @@ def main():
     modname = sys.argv[2]
     pyf     = Path(sys.argv[3]).resolve()
 
+    orig_cwd = Path.cwd()
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = Path(tmp)
 
@@ -61,6 +62,11 @@ def main():
             run_compile()
         except SystemExit:
             pass
+
+        # Restore CWD before the TemporaryDirectory context exits — on Windows,
+        # shutil.rmtree fails with PermissionError if the process CWD is inside
+        # the directory being deleted.
+        os.chdir(orig_cwd)
 
     # Create placeholder files for any wrapper files f2py didn't generate.
     for name, content in [
