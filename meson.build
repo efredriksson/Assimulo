@@ -332,9 +332,10 @@ if get_option('enable_fortran')
       install_dir: join_paths(py.get_install_dir(), 'assimulo/lib'),
       install: true,
       command: [
-        py, '-m', 'numpy.f2py', '-c', '-m', solver_name,
+        py, join_paths(meson.current_source_dir(), 'tools', 'f2py_build.py'),
+        meson.project_source_root(),
+        '-c', '-m', solver_name,
       ] + solver_srcs + f2py_fc_args,
-      workdir: meson.project_source_root(),
       console: true,
       build_by_default: true
     )
