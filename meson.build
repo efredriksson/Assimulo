@@ -251,91 +251,120 @@ py.extension_module(
   install: true
 )
 
+f2py_src = run_command(
+  py,
+  ['-c', 'import numpy.f2py, os; print(os.path.join(os.path.dirname(numpy.f2py.__file__), "src"))'],
+  check: true
+).stdout().strip()
+fortranobject_c = join_paths(f2py_src, 'fortranobject.c')
+
+blas_dep   = cc.find_library('blas',   dirs: default_lib_candidates, required: false)
+lapack_dep = cc.find_library('lapack', dirs: default_lib_candidates, required: false)
 fortran_solvers = [
   {
-    'name': 'dopri5',
-    'subdir': 'hairer',
-    'sources': ['dopri5.f', 'dopri5.pyf'],
+    'name':         'dopri5',
+    'pyf':          files('thirdparty/hairer/dopri5.pyf'),
+    'fortran_srcs': files('thirdparty/hairer/dopri5.f'),
+    'outputs':      ['module.c', '-f2pywrappers.f'],
   },
   {
-    'name': 'rodas',
-    'subdir': 'hairer',
-    'sources': ['rodas_decsol.f', 'rodas_decsol.pyf'],
+    'name':         'rodas',
+    'pyf':          files('thirdparty/hairer/rodas_decsol.pyf'),
+    'fortran_srcs': files('thirdparty/hairer/rodas_decsol.f'),
+    'outputs':      ['module.c', '-f2pywrappers.f'],
   },
   {
-    'name': 'radau5',
-    'subdir': 'hairer',
-    'sources': ['radau_decsol.pyf', 'radau_decsol.f'],
+    'name':         'radau5',
+    'pyf':          files('thirdparty/hairer/radau_decsol.pyf'),
+    'fortran_srcs': files('thirdparty/hairer/radau_decsol.f'),
+    'outputs':      ['module.c', '-f2pywrappers.f'],
   },
   {
-    'name': 'radar5',
-    'subdir': 'hairer',
-    'sources': [
-      'contr5.f90', 'radar5_int.f90', 'radar5.f90', 'dontr5.f90',
-      'decsol.f90', 'dc_decdel.f90', 'radar5.pyf',
-    ],
+    'name':         'radar5',
+    'pyf':          files('thirdparty/hairer/radar5.pyf'),
+    'fortran_srcs': files(
+      'thirdparty/hairer/contr5.f90', 'thirdparty/hairer/radar5_int.f90',
+      'thirdparty/hairer/radar5.f90', 'thirdparty/hairer/dontr5.f90',
+      'thirdparty/hairer/decsol.f90', 'thirdparty/hairer/dc_decdel.f90',
+    ),
+    'outputs':      ['module.c', '-f2pywrappers.f', '-f2pywrappers2.f90'],
   },
   {
-    'name': 'odepack',
-    'subdir': 'odepack',
-    'sources': ['opkdmain.f', 'opkda1.f', 'opkda2.f', 'odepack_aux.f90', 'odepack.pyf'],
+    'name':         'odepack',
+    'pyf':          files('thirdparty/odepack/odepack.pyf'),
+    'fortran_srcs': files(
+      'thirdparty/odepack/opkdmain.f', 'thirdparty/odepack/opkda1.f',
+      'thirdparty/odepack/opkda2.f',   'thirdparty/odepack/odepack_aux.f90',
+    ),
+    'outputs':      ['module.c', '-f2pywrappers.f'],
   },
   {
-    'name': 'odassl',
-    'subdir': 'odassl',
-    'sources': [
-      'odassl.pyf', 'odassl.f', 'odastp.f', 'odacor.f', 'odajac.f', 'd1mach.f',
-      'daxpy.f', 'ddanrm.f',  'ddatrp.f', 'ddot.f', 'ddwats.f', 'dgefa.f', 'dgesl.f',
-      'dscal.f', 'idamax.f', 'xerrwv.f',
-    ],
+    'name':         'odassl',
+    'pyf':          files('thirdparty/odassl/odassl.pyf'),
+    'fortran_srcs': files(
+      'thirdparty/odassl/odassl.f',  'thirdparty/odassl/odastp.f',
+      'thirdparty/odassl/odacor.f',  'thirdparty/odassl/odajac.f',
+      'thirdparty/odassl/d1mach.f',  'thirdparty/odassl/daxpy.f',
+      'thirdparty/odassl/ddanrm.f',  'thirdparty/odassl/ddatrp.f',
+      'thirdparty/odassl/ddot.f',    'thirdparty/odassl/ddwats.f',
+      'thirdparty/odassl/dgefa.f',   'thirdparty/odassl/dgesl.f',
+      'thirdparty/odassl/dscal.f',   'thirdparty/odassl/idamax.f',
+      'thirdparty/odassl/xerrwv.f',
+    ),
+    'outputs':      ['module.c', '-f2pywrappers.f'],
   },
   {
-    'name': 'dasp3dp',
-    'subdir': 'dasp3',
-    'sources': [
-      'dasp3dp.pyf', 'DASP3.f', 'ANORM.f', 'CTRACT.f', 'DECOMP.f', 'HMAX.f', 'INIVAL.f',
-      'JACEST.f', 'PDERIV.f', 'PREPOL.f', 'SOLVE.f', 'SPAPAT.f',
-    ],
-    'extra_args': [],
+    'name':         'dasp3dp',
+    'pyf':          files('thirdparty/dasp3/dasp3dp.pyf'),
+    'fortran_srcs': files(
+      'thirdparty/dasp3/DASP3.f',   'thirdparty/dasp3/ANORM.f',
+      'thirdparty/dasp3/CTRACT.f',  'thirdparty/dasp3/DECOMP.f',
+      'thirdparty/dasp3/HMAX.f',    'thirdparty/dasp3/INIVAL.f',
+      'thirdparty/dasp3/JACEST.f',  'thirdparty/dasp3/PDERIV.f',
+      'thirdparty/dasp3/PREPOL.f',  'thirdparty/dasp3/SOLVE.f',
+      'thirdparty/dasp3/SPAPAT.f',
+    ),
+    'outputs':      ['module.c', '-f2pywrappers.f'],
   },
   {
-    'name': 'glimda',
-    'subdir': 'glimda',
-    'sources': ['glimda_complete.pyf', 'glimda_complete.f'],
-    'extra_args': ['--dep', 'blas', '--dep', 'lapack'],
-  }
+    'name':         'glimda',
+    'pyf':          files('thirdparty/glimda/glimda_complete.pyf'),
+    'fortran_srcs': files('thirdparty/glimda/glimda_complete.f'),
+    'outputs':      ['module.c', '-f2pywrappers.f'],
+    'extra_deps':   [blas_dep, lapack_dep],
+  },
 ]
 
-# --- f2py / Fortran solver modules (first attempt) ---
-# This is intentionally "best effort" in the first conversion pass; can be toggled off.
+# --- f2py / Fortran solver modules ---
 if get_option('enable_fortran')
-  ext_suffix = run_command(
-    py,
-    ['-c', 'import sysconfig; print(sysconfig.get_config_var("EXT_SUFFIX"))'],
-    check: true
-  ).stdout().strip()
-
   foreach solver : fortran_solvers
+    solver_name  = solver['name']
+    fortran_srcs = solver['fortran_srcs']
 
-    f2py_fc_args = ['--fcompiler=gnu95', '--f77flags=--std=legacy'] + solver.get('extra_args', [])
-
-    solver_srcs = []
-    solver_src_dir = join_paths(meson.current_source_dir(), 'thirdparty', solver['subdir'])
-    foreach f : solver['sources']
-      solver_srcs += join_paths(solver_src_dir, f)
+    solver_outputs = []
+    foreach suf : solver['outputs']
+      solver_outputs += solver_name + suf
     endforeach
 
-    solver_name = solver['name']
-    custom_target(
-      'f2py_' + solver_name,
-      output: solver_name + ext_suffix,
-      install_dir: join_paths(py.get_install_dir(), 'assimulo/lib'),
-      install: true,
-      command: [
-        py, '-m', 'numpy.f2py', '-c', '-m', solver_name,
-      ] + solver_srcs + f2py_fc_args,
-      console: true,
-      build_by_default: true
+    wrappers = custom_target(
+      'f2py_wrap_' + solver_name,
+      input:   solver['pyf'],
+      output:  solver_outputs,
+      command: [py,
+                join_paths(meson.current_source_dir(), 'tools', 'f2py_wrapper.py'),
+                '@OUTDIR@', solver_name, '@INPUT@'],
+      build_by_default: false,
+    )
+
+    py.extension_module(
+      solver_name,
+      sources:             [wrappers] + fortran_srcs + [fortranobject_c],
+      subdir:              'assimulo/lib',
+      include_directories: include_directories('src/assimulo'),
+      c_args:              common_c_args + ['-I' + f2py_src],
+      fortran_args:        ['-std=legacy'],
+      dependencies:        solver.get('extra_deps', []),
+      install:             true,
     )
   endforeach
 endif

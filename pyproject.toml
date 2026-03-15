@@ -41,11 +41,7 @@ skip  = "*-win32 *-manylinux_i686 *-musllinux*"
 # so meson picks up gcc/gfortran instead of MSVC.
 before-build = "pip install delvewheel"
 repair-wheel-command = "pwsh {project}/tools/wheels/repair_windows.ps1 {wheel} {dest_dir}"
-# Fortran solvers are disabled on Windows: numpy.distutils (used by f2py -c)
-# concatenates the drive letter with an absolute build path, producing invalid
-# paths like 'D:D:\...'. The fix (f2py wrapper-only + meson compilation) is a
-# larger refactor deferred to a future PR.
-config-settings = {"setup-args" = ["-Dsundials_prefix=C:/deps", "-Dopenmp=true", "-Denable_fortran=false"]}
+config-settings = {"setup-args" = ["-Dsundials_prefix=C:/deps", "-Dopenmp=true"]}
 
 [tool.cibuildwheel.linux]
 # Use the pre-built assimulo-manylinux image which has SuperLU + SUNDIALS already
