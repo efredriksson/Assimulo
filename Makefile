@@ -1,4 +1,4 @@
-.PHONY: build wheel build-dev-image build-manylinux-image test shell compile-deps check-meson.build build-dev wheel-portable
+.PHONY: build wheel build-dev-image build-manylinux-image test shell compile-deps check-meson.build build-dev wheel-portable wheel-cibw
 DOCKER_IMAGE      := assimulo-dev
 MANYLINUX_IMAGE   := assimulo-manylinux
 MESON_BUILD_DIR   := builddir
@@ -57,6 +57,10 @@ compile-deps:
 	$(call _run, python3 -m venv .venv)
 	$(call _run_with_venv, pip install pip-tools)
 	$(call _run_with_venv, pip-compile --extra=dev --output-file=requirements.lock pyproject.toml)
+
+wheel-cibw:
+	pip install cibuildwheel
+	cibuildwheel --platform linux --output-dir dist/
 
 wheel-portable:
 	mkdir -p dist
