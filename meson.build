@@ -334,6 +334,7 @@ if get_option('enable_fortran')
       command: [
         py, '-m', 'numpy.f2py', '-c', '-m', solver_name,
       ] + solver_srcs + f2py_fc_args,
+      workdir: meson.project_source_root(),
       console: true,
       build_by_default: true
     )
