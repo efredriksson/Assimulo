@@ -356,14 +356,27 @@ if get_option('enable_fortran')
       build_by_default: false,
     )
 
+    # Compile Fortran sources as a static library first so that any Fortran
+    # module files (.mod) are generated before the f2py wrapper files are
+    # compiled (e.g. radar5-f2pywrappers2.f90 uses the ip_array module from
+    # radar5.f90, and meson does not scan custom_target outputs for 'use').
+    solver_lib = static_library(
+      solver_name + '_impl',
+      sources:      fortran_srcs,
+      fortran_args: ['-std=legacy'],
+      pic:          true,
+      install:      false,
+    )
+
     py.extension_module(
       solver_name,
-      sources:             [wrappers] + fortran_srcs + [fortranobject_c],
+      sources:             [wrappers] + [fortranobject_c],
       subdir:              'assimulo/lib',
       include_directories: include_directories('src/assimulo'),
       c_args:              common_c_args + ['-I' + f2py_src],
       fortran_args:        ['-std=legacy'],
       dependencies:        solver.get('extra_deps', []),
+      link_with:           solver_lib,
       install:             true,
     )
   endforeach

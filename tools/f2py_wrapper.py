@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 """Generate f2py C/Fortran wrapper files without compiling.
 
-Called by meson custom_target. Produces the wrapper files declared in the
-fortran_solvers 'outputs' list in meson.build — typically:
+Called by meson custom_target. Produces:
   <modname>module.c           — C/Python glue code
   <modname>-f2pywrappers.f    — Fortran 77 calling-convention shims
   <modname>-f2pywrappers2.f90 — Fortran 90 shims (radar5 only)
 
-Only the .pyf interface file is passed to f2py; Fortran sources are compiled by
-meson/gfortran directly. f2py is run with -c --backend meson so it uses the
-meson code path on all numpy versions (>=1.26). The non-c path has a regression
-that generates empty modules when a .pyf contains 'interface  ! in :source'
-block annotations (as odepack.pyf does). A no-op fake meson is put on PATH so
-that the meson setup/compile steps that -c triggers are silently skipped. f2py
-writes wrapper files directly to outdir via --build-dir so no copying is needed.
+f2py's run_compile() is called directly (not via subprocess) so that the
+MesonBackend monkey-patches apply in the same process. On Windows, where
+subprocess without shell=True can't find .cmd files, _run_subprocess_command
+is patched to add shell=True so cmd.exe resolves our fake meson.cmd via PATHEXT.
 
 Usage: python3 f2py_wrapper.py <outdir> <modname> <pyf_file>
 """
@@ -23,28 +19,6 @@ import sys
 import subprocess
 import tempfile
 from pathlib import Path
-
-
-def fake_meson_dir(tmpdir: Path) -> Path:
-    """Write a no-op meson script to *tmpdir* and return it."""
-    if sys.platform == "win32":
-        meson = tmpdir / "meson.cmd"
-        meson.write_text("@python -c \"import sys; sys.exit(0)\" %*\n")
-
-        # On Windows, CreateProcess (used by subprocess without shell=True) only
-        # resolves .exe files, not .cmd. Patch f2py's meson backend to use
-        # shell=True on Windows so cmd.exe finds our fake meson.cmd via PATHEXT.
-        from numpy.f2py._backends._meson import MesonBackend
-        MesonBackend._run_subprocess_command = (
-            lambda self, cmd, cwd: subprocess.run(cmd, cwd=cwd, check=True, shell=True)
-        )
-
-    else:
-        meson = tmpdir / "meson"
-        meson.write_text("#!/usr/bin/env python3\nimport sys; sys.exit(0)\n")
-        meson.chmod(0o755)
-
-    return tmpdir
 
 
 def main():
@@ -58,14 +32,44 @@ def main():
 
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = Path(tmp)
-        env = {**os.environ, "PATH": str(fake_meson_dir(tmpdir)) + os.pathsep + os.environ.get("PATH", "")}
-        subprocess.run(
-            [sys.executable, "-m", "numpy.f2py", "-m", modname,
-             "--build-dir", str(outdir), "--backend", "meson", "-c", str(pyf)],
-            cwd=tmpdir,
-            env=env,
-            check=True,
-        )
+
+        # Place a no-op fake meson on PATH so f2py's -c compilation step exits 0.
+        if sys.platform == "win32":
+            (tmpdir / "meson.cmd").write_text("@python -c \"import sys; sys.exit(0)\" %*\n")
+            # CreateProcess (subprocess without shell=True) only finds .exe, not
+            # .cmd. Patch f2py's backend to use shell=True so cmd.exe finds
+            # meson.cmd. This must be done in-process — patching in a subprocess
+            # parent has no effect on the child.
+            from numpy.f2py._backends._meson import MesonBackend
+            MesonBackend._run_subprocess_command = (
+                lambda self, cmd, cwd: subprocess.run(cmd, cwd=cwd, check=True, shell=True)
+            )
+        else:
+            meson = tmpdir / "meson"
+            meson.write_text("#!/usr/bin/env python3\nimport sys; sys.exit(0)\n")
+            meson.chmod(0o755)
+
+        os.environ["PATH"] = str(tmpdir) + os.pathsep + os.environ.get("PATH", "")
+
+        # Run f2py in tmpdir so _prepare_sources can copy generated files from
+        # CWD (tmpdir) to --build-dir (outdir) without a SameFileError.
+        os.chdir(tmpdir)
+        sys.argv = ["f2py", "-m", modname, "--build-dir", str(outdir),
+                    "--backend", "meson", "-c", str(pyf)]
+        from numpy.f2py.f2py2e import run_compile
+        try:
+            run_compile()
+        except SystemExit:
+            pass
+
+    # Create placeholder files for any wrapper files f2py didn't generate.
+    for name, content in [
+        (f"{modname}-f2pywrappers.f",    "! f2py placeholder\n"),
+        (f"{modname}-f2pywrappers2.f90", "! f2py placeholder\n"),
+    ]:
+        path = outdir / name
+        if not path.exists():
+            path.write_text(content)
 
 
 if __name__ == "__main__":
