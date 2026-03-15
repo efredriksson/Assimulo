@@ -261,14 +261,19 @@ f2py_src = run_command(
 ).stdout().strip()
 fortranobject_c = join_paths(f2py_src, 'fortranobject.c')
 
-# On Windows, OpenBLAS ships as a single 'openblas' library that covers both
-# BLAS and LAPACK. On Linux separate 'blas' and 'lapack' packages are used.
 if host_machine.system() == 'windows'
-  blas_dep   = cc.find_library('openblas', dirs: default_lib_candidates, required: true)
-  lapack_dep = blas_dep
+  # On Windows, OpenBLAS is statically linked (see build_dependencies_windows.sh).
+  # It covers both BLAS and LAPACK. OpenBLAS DLL is too large to bundle.
+  blas_dep      = cc.find_library('openblas', dirs: default_lib_candidates, static: true, required: true)
+
+  # libopenblas.a is built with OpenMP, so omp_dep must also be linked.
+  glimda_deps   = [blas_dep, omp_dep]
 else
-  blas_dep   = cc.find_library('blas',   dirs: default_lib_candidates, required: true)
-  lapack_dep = cc.find_library('lapack', dirs: default_lib_candidates, required: true)
+  # On Linux, link dynamically against the system-provided shared libraries.
+  blas_dep      = cc.find_library('blas',   dirs: default_lib_candidates, required: true)
+  lapack_dep    = cc.find_library('lapack', dirs: default_lib_candidates, required: true)
+
+  glimda_deps   = [blas_dep, lapack_dep]
 endif
 fortran_solvers = [
   {
@@ -341,7 +346,7 @@ fortran_solvers = [
     'pyf':          files('thirdparty/glimda/glimda_complete.pyf'),
     'fortran_srcs': files('thirdparty/glimda/glimda_complete.f'),
     'outputs':      ['module.c', '-f2pywrappers.f'],
-    'extra_deps':   [blas_dep, lapack_dep],
+    'extra_deps':   glimda_deps,
   },
 ]
 

@@ -30,7 +30,8 @@ cmake --build /tmp/sundials/build --parallel "${NPROC}"
 cmake --install /tmp/sundials/build
 rm -rf /tmp/sundials
 
-# --- OpenBLAS (provides BLAS and LAPACK for glimda) ---
+# --- OpenBLAS static library (for glimda) ---
+# libopenblas.a is statically linked into glimda.pyd so no DLL is bundled.
+# The linker strips unused routines, keeping the size impact small.
 pacman -S --noconfirm mingw-w64-ucrt-x86_64-openblas
-cp /ucrt64/lib/libopenblas.dll.a "${INSTALL_PREFIX}/lib/"
-cp /ucrt64/bin/libopenblas.dll   "${INSTALL_PREFIX}/bin/"
+cp /ucrt64/lib/libopenblas.a "${INSTALL_PREFIX}/lib/"
