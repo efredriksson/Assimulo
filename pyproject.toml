@@ -36,10 +36,11 @@ build = "cp311-* cp312-* cp313-*"
 skip  = "*-win32 *-manylinux_i686"
 
 [tool.cibuildwheel.linux]
-manylinux-x86_64-image = "quay.io/pypa/manylinux_2_28_x86_64"
-# before-all runs once per container boot, before any Python version is built.
-# SuperLU + SUNDIALS only need to be compiled once, so before-all is correct
-# (before-build would recompile them once per Python version).
-before-all = "bash {project}/tools/wheels/build_dependencies.sh"
+# Use the pre-built assimulo-manylinux image which has SuperLU + SUNDIALS already
+# compiled (via Dockerfile.manylinux → tools/wheels/build_dependencies.sh).
+# The official manylinux images are intentionally stripped of their package
+# manager, so before-all cannot install system packages.
+# Build the image first: make build-manylinux-image
+manylinux-x86_64-image = "assimulo-manylinux"
 repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
 config-settings = {"setup-args" = ["-Dsundials_prefix=/usr", "-Dsuperlu_prefix=/usr", "-Dopenmp=true"]}
