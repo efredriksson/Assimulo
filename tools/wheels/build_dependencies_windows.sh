@@ -10,7 +10,7 @@ SUNDIALS_VERSION="2.7.0-3"
 INSTALL_PREFIX="/c/deps"
 NPROC=$(nproc 2>/dev/null || echo 4)
 
-mkdir -p "${INSTALL_PREFIX}"
+mkdir -p "${INSTALL_PREFIX}/bin" "${INSTALL_PREFIX}/lib"
 
 git clone --depth 1 -b "v${SUNDIALS_VERSION}" \
     https://github.com/modelon-community/sundials /tmp/sundials
@@ -29,3 +29,8 @@ cmake -S /tmp/sundials -B /tmp/sundials/build \
 cmake --build /tmp/sundials/build --parallel "${NPROC}"
 cmake --install /tmp/sundials/build
 rm -rf /tmp/sundials
+
+# --- OpenBLAS (provides BLAS and LAPACK for glimda) ---
+pacman -S --noconfirm mingw-w64-ucrt-x86_64-openblas
+cp /ucrt64/lib/libopenblas.dll.a "${INSTALL_PREFIX}/lib/"
+cp /ucrt64/bin/libopenblas.dll   "${INSTALL_PREFIX}/bin/"
