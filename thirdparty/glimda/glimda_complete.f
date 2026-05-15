@@ -1494,13 +1494,13 @@ C  DESCRIPTION
 C     integer  P3METH [-3] .. the particular order 3 method to use
 C
 C              P3METH      =  1   use a method with s=r=p=q=3 and 
-C                                 A(alpha) stability for alpha=74°
+C                                 A(alpha) stability for alpha=74 deg
 C                                 but being unconditionally stable
 C                                 at zero and at infinity
 C              P3METH      =  2   use a method with s=r=p=q=3 and 
-C                                 A(alpha) stability for alpha=88.1°
+C                                 A(alpha) stability for alpha=88.1 deg
 C
-C                             default: 1 
+C                             default: 1
 C  SEE ALSO
 C     iopt
 C
@@ -2397,11 +2397,11 @@ C                              and (p+1)-st scaled derivatives
 C                              delta depends on the method currently used
 C     integer  type         .. the particular order 3 method to use
 C                              type = 1  use a method with s=r=p=q=3 and 
-C                                        A(alpha) stability for alpha=74°
+C                                        A(alpha) stability for alpha=74 deg
 C                                        but being unconditionally stable
 C                                        at zero and at infinity
-C                              type = 2  use a method with s=r=p=q=3 and 
-C                                        A(alpha) stability for alpha=88.1°
+C                              type = 2  use a method with s=r=p=q=3 and
+C                                        A(alpha) stability for alpha=88.1 deg
 C     integer  ierr         .. return code (0 signals success)
 C
 C  COPYRIGHT
@@ -2655,9 +2655,9 @@ C
       real*8           lambda,A(MD,MD),U(MD,MD),B(MD,MD),V(MD,MD),c(MD),
      $                 c1beta(MD),delta(MD+1,2)
 
-C     .. alpha = 61.7° ..
+C     .. alpha = 61.7 deg ..
       lambda = 0.15d0
-C     .. alpha = 74° ..     
+C     .. alpha = 74 deg ..
       lambda = 4.d0/25.d0
 
       A(1,1) = lambda
@@ -2733,7 +2733,7 @@ C     This is another stiffly accurate method with s=r=p=q=3. Again, the
 C     method is not A-stable but A(alpha) stable and the only eigenvalue
 C     of M(\infty) is zero. Compared to p3s3, the method is not 
 C     unconditionally stable but the region of A(alpha) stability is 
-C     considerably enlarged to alpha=88.1°.
+C     considerably enlarged to alpha=88.1 deg.
 C 
 C  COPYRIGHT
 C
