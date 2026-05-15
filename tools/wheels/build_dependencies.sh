@@ -19,7 +19,7 @@ yum install -y \
     lapack-devel \
     lapack-static \
     blas-devel \
-    openblas-static \
+    openblas-devel \
     cmake
 yum clean all
 
@@ -28,9 +28,6 @@ yum clean all
 rm -f /usr/local/bin/cmake
 cmake --version
 
-# openblas-static provides libopenblas.a; meson and SuperLU expect libblas.a
-ln -sf /usr/lib64/libopenblas.a /usr/lib64/libblas.a
-cp /usr/lib64/libblas.so /usr/lib64/libblas_OPENMP.so
 
 # --- SuperLU_MT ---
 curl -fSsL \

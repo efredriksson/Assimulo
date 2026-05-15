@@ -225,16 +225,9 @@ if with_superlu
     'thirdparty/radau5/superlu_util.c',
   ]
 
-  # Try to find SuperLU_MT and BLAS (and optionally a blas_OPENMP compatibility lib)
   superlu_mt = cc.find_library('superlu_mt_OPENMP', dirs: superlu_libdirs, static: true, required: true)
-  radau5_deps += [superlu_mt]
-
-  blas_openmp = cc.find_library('blas_OPENMP', dirs: default_lib_candidates, static: true, required: false)
-  blas = cc.find_library('blas', dirs: default_lib_candidates, static: true, required: true)
-  if blas_openmp.found()
-    radau5_deps += [blas_openmp]
-  endif
-  radau5_deps += [blas]
+  openblas   = cc.find_library('openblas', dirs: default_lib_candidates, required: true)
+  radau5_deps += [superlu_mt, openblas]
 
   # gomp is typically needed when linking OpenMP with gcc
   gomp = cc.find_library('gomp', required: false)
