@@ -11,14 +11,12 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     liblapack-dev \
+    libopenblas-dev \
     cmake \
     build-essential \
     gfortran \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
-
-RUN cp -v /usr/lib/x86_64-linux-gnu/libblas.so \
-          /usr/lib/x86_64-linux-gnu/libblas_OPENMP.so
 
 # ------------------------------------------------------------
 # SuperLU
