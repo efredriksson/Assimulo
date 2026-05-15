@@ -13,6 +13,11 @@ SUPERLU_VERSION="4.0.1"
 SUNDIALS_VERSION="2.7.0-3"
 NPROC=$(nproc)
 
+# Both SUNDIALS 2.7 and SuperLU_MT 4.0.1 use `cmake_minimum_required` values
+# that modern cmake (>= 4.x, shipped in manylinux_2_28) rejects. Export as
+# an env var so it propagates to cmake's `try_compile` sub-invocations.
+export CMAKE_POLICY_VERSION_MINIMUM=3.5
+
 # --- System packages ---
 # OpenBLAS provides both BLAS and LAPACK symbols. SUNDIALS is built with
 # LAPACK_ENABLE=OFF (Assimulo never calls CVLapackDense/Band APIs), so no
@@ -20,15 +25,8 @@ NPROC=$(nproc)
 # against OpenBLAS.
 yum install -y \
     gcc-gfortran \
-    openblas-devel \
-    cmake
+    openblas-devel
 yum clean all
-
-# cmake 4.x rejects SUNDIALS 2.7.0 old CMakeLists.txt. The yum cmake above installs
-# cmake 3.x at /usr/bin/cmake; remove any cmake 4.x that may be at /usr/local/bin.
-rm -f /usr/local/bin/cmake
-cmake --version
-
 
 # --- SuperLU_MT ---
 curl -fSsL \
