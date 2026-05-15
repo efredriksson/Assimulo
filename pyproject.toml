@@ -41,7 +41,7 @@ skip  = "*-win32 *-manylinux_i686 *-musllinux*"
 # so meson picks up gcc/gfortran instead of MSVC.
 before-build = "pip install delvewheel"
 repair-wheel-command = "pwsh {project}/tools/wheels/repair_windows.ps1 {wheel} {dest_dir}"
-config-settings = {"setup-args" = ["-Dsundials_prefix=C:/deps", "-Dopenmp=true"]}
+config-settings = {"setup-args" = ["-Dsundials_prefix=C:/deps", "-Dsuperlu_prefix=C:/deps", "-Dopenmp=true"]}
 
 [tool.cibuildwheel.linux]
 # Use the pre-built assimulo-manylinux image which has SuperLU + SUNDIALS already

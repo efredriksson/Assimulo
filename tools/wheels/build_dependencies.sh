@@ -14,11 +14,12 @@ SUNDIALS_VERSION="2.7.0-3"
 NPROC=$(nproc)
 
 # --- System packages ---
+# OpenBLAS provides both BLAS and LAPACK symbols. SUNDIALS is built with
+# LAPACK_ENABLE=OFF (Assimulo never calls CVLapackDense/Band APIs), so no
+# netlib reference BLAS/LAPACK is needed. SuperLU_MT and glimda both link
+# against OpenBLAS.
 yum install -y \
     gcc-gfortran \
-    lapack-devel \
-    lapack-static \
-    blas-devel \
     openblas-devel \
     cmake
 yum clean all
@@ -48,15 +49,18 @@ make -C "/tmp/superlu_mt-${SUPERLU_VERSION}/build" install
 rm -rf "/tmp/superlu_mt-${SUPERLU_VERSION}"
 
 # --- SUNDIALS (Modelon community fork) ---
-# Embed SuperLU+BLAS into the shared libs so the .so files are self-contained.
+# Embed SuperLU + OpenBLAS into the SUNDIALS shared libs so the .so files
+# are self-contained. SuperLU_MT itself calls dgemm_/dgetrf_ → OpenBLAS
+# must be listed as a target_link_libraries dep too. LAPACK_ENABLE is OFF
+# because Assimulo never calls SUNDIALS' CVLapack* APIs.
 git clone --depth 1 -b "v${SUNDIALS_VERSION}" \
     https://github.com/modelon-community/sundials /tmp/sundials
 
-echo "target_link_libraries(sundials_cvodes_shared lapack blas superlu_mt_OPENMP)" \
+echo "target_link_libraries(sundials_cvodes_shared superlu_mt_OPENMP openblas)" \
     >> /tmp/sundials/src/cvodes/CMakeLists.txt
-echo "target_link_libraries(sundials_idas_shared lapack blas superlu_mt_OPENMP)" \
+echo "target_link_libraries(sundials_idas_shared superlu_mt_OPENMP openblas)" \
     >> /tmp/sundials/src/idas/CMakeLists.txt
-echo "target_link_libraries(sundials_kinsol_shared lapack blas superlu_mt_OPENMP)" \
+echo "target_link_libraries(sundials_kinsol_shared superlu_mt_OPENMP openblas)" \
     >> /tmp/sundials/src/kinsol/CMakeLists.txt
 
 cmake -S /tmp/sundials -B /tmp/sundials/build \
@@ -64,7 +68,7 @@ cmake -S /tmp/sundials -B /tmp/sundials/build \
     -DSUPERLUMT_LIBRARY=/usr/lib/libsuperlu_mt_OPENMP.a \
     -DSUPERLUMT_THREAD_TYPE=OpenMP \
     -DSUPERLUMT_ENABLE=ON \
-    -DLAPACK_ENABLE=ON \
+    -DLAPACK_ENABLE=OFF \
     -DEXAMPLES_ENABLE=OFF \
     -DEXAMPLES_ENABLE_C=OFF \
     -DBUILD_STATIC_LIBS=ON \

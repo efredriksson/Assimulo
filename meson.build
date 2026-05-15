@@ -254,22 +254,12 @@ f2py_src = run_command(
 ).stdout().strip()
 fortranobject_c = join_paths(f2py_src, 'fortranobject.c')
 
-# On Windows, BLAS/LAPACK are statically linked (no DLL bundled in the wheel).
-# Default 'reference': small reference impl (libblas.a + liblapack.a from mingw lapack package).
-# Optional 'openblas': fast but adds ~30 MB to glimda.pyd; also requires OpenMP.
-# On Linux, link dynamically against the system-provided shared libraries.
-if host_machine.system() == 'windows'
-  if get_option('windows_blas') == 'openblas'
-    blas_dep    = cc.find_library('openblas', dirs: default_lib_candidates, static: true, required: true)
-    glimda_deps = [blas_dep, omp_dep]
-  else
-    blas_dep    = cc.find_library('blas',   dirs: default_lib_candidates, static: true, required: true)
-    lapack_dep  = cc.find_library('lapack', dirs: default_lib_candidates, static: true, required: true)
-    glimda_deps = [blas_dep, lapack_dep]
-  endif
-else
-  glimda_deps = [cc.find_library('openblas', dirs: default_lib_candidates, required: true)]
-endif
+# BLAS/LAPACK for glimda — OpenBLAS dynamic on both platforms. The same
+# libopenblas.so/.dll is reused by SUNDIALS (built against it inside the
+# Docker manylinux image / MSYS2 build step), so the wheel ships exactly
+# one OpenBLAS bundled by auditwheel (Linux) / delvewheel (Windows).
+blas_dep    = cc.find_library('openblas', dirs: default_lib_candidates, required: true)
+glimda_deps = [blas_dep]
 fortran_solvers = [
   {
     'name':         'dopri5',

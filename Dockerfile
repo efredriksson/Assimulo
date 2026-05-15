@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     git \
     curl \
-    liblapack-dev \
     libopenblas-dev \
     cmake \
     build-essential \
@@ -43,12 +42,13 @@ ARG SUNDIALS_VERSION=2.7.0-3
 
 RUN git clone --depth 1 -b v${SUNDIALS_VERSION} https://github.com/modelon-community/sundials /tmp/sundials
 
-# Link cvodes, idas and kinsol against superlu_mt so the shared libs are self-contained
-RUN echo "target_link_libraries(sundials_cvodes_shared lapack blas superlu_mt_OPENMP)" \
+# Embed SuperLU_MT + OpenBLAS into SUNDIALS shared libs so .so files are
+# self-contained. LAPACK_ENABLE=OFF: Assimulo never calls CVLapack* APIs.
+RUN echo "target_link_libraries(sundials_cvodes_shared superlu_mt_OPENMP openblas)" \
       >> /tmp/sundials/src/cvodes/CMakeLists.txt && \
-    echo "target_link_libraries(sundials_idas_shared lapack blas superlu_mt_OPENMP)" \
+    echo "target_link_libraries(sundials_idas_shared superlu_mt_OPENMP openblas)" \
       >> /tmp/sundials/src/idas/CMakeLists.txt && \
-    echo "target_link_libraries(sundials_kinsol_shared lapack blas superlu_mt_OPENMP)" \
+    echo "target_link_libraries(sundials_kinsol_shared superlu_mt_OPENMP openblas)" \
       >> /tmp/sundials/src/kinsol/CMakeLists.txt
 
 RUN cmake -S /tmp/sundials -B /tmp/sundials/build \
@@ -56,7 +56,7 @@ RUN cmake -S /tmp/sundials -B /tmp/sundials/build \
     -DSUPERLUMT_LIBRARY=/usr/lib/libsuperlu_mt_OPENMP.a \
     -DSUPERLUMT_THREAD_TYPE=OpenMP \
     -DSUPERLUMT_ENABLE=ON \
-    -DLAPACK_ENABLE=ON \
+    -DLAPACK_ENABLE=OFF \
     -DEXAMPLES_ENABLE=OFF \
     -DEXAMPLES_ENABLE_C=OFF \
     -DBUILD_STATIC_LIBS=ON \
