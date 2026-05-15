@@ -268,9 +268,7 @@ if host_machine.system() == 'windows'
     glimda_deps = [blas_dep, lapack_dep]
   endif
 else
-  blas_dep    = cc.find_library('blas',   dirs: default_lib_candidates, required: true)
-  lapack_dep  = cc.find_library('lapack', dirs: default_lib_candidates, required: true)
-  glimda_deps = [blas_dep, lapack_dep]
+  glimda_deps = [cc.find_library('openblas', dirs: default_lib_candidates, required: true)]
 endif
 fortran_solvers = [
   {
