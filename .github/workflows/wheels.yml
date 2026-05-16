@@ -9,6 +9,10 @@ on:
         description: "Publish wheels to PyPI after building"
         type: boolean
         default: false
+      test_release:
+        description: "When publishing, rewrite the package name to assimulo-testing (fork-only; remove before merging upstream)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -20,6 +24,14 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+
+      - name: Rewrite package name to assimulo-testing
+        if: github.event_name == 'workflow_dispatch' && inputs.publish && inputs.test_release
+        run: |
+          sed -i 's/^name = "Assimulo"$/name = "assimulo-testing"/' pyproject.toml
+          sed -i "s/^  'Assimulo',$/  'assimulo-testing',/" meson.build
+          grep '^name = ' pyproject.toml
+          grep -n "assimulo-testing" meson.build
 
       - uses: actions/setup-python@v5
         with:
@@ -44,6 +56,15 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+
+      - name: Rewrite package name to assimulo-testing
+        if: github.event_name == 'workflow_dispatch' && inputs.publish && inputs.test_release
+        shell: bash
+        run: |
+          sed -i 's/^name = "Assimulo"$/name = "assimulo-testing"/' pyproject.toml
+          sed -i "s/^  'Assimulo',$/  'assimulo-testing',/" meson.build
+          grep '^name = ' pyproject.toml
+          grep -n "assimulo-testing" meson.build
 
       - name: Set up MSYS2 UCRT64
         uses: msys2/setup-msys2@v2
