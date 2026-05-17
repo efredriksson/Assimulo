@@ -1,7 +1,7 @@
 project(
   'Assimulo',
   ['c', 'cython', 'fortran'],
-  version: '3.9.0b1',
+  version: '3.9.0b2',
   meson_version: '>=1.4'
 )
 

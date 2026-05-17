@@ -1,4 +1,24 @@
 --- CHANGELOG ---
+--- Assimulo-3.9.0b2 ---
+    Second beta of the modernized build system. No functional or API changes
+    relative to 3.9.0b1.
+
+    Packaging and distribution:
+    * Wheel matrix expanded to CPython 3.14 and Linux aarch64
+      (ubuntu-22.04-arm runners). Pull requests build cp311 + cp314 on
+      Linux x86_64 and Windows; master/tag/workflow_dispatch builds the
+      full matrix.
+    * wheels.yml restructured: a `config` job emits the matrix as JSON and
+      the linux/windows jobs consume it via fromJSON, working around the
+      fact that the `matrix` context is not available in `jobs.<id>.if`.
+
+    Tests:
+    * Replaced the non-idiomatic `@classmethod` + `@pytest.fixture(autouse=True)`
+      stack on `setup_class` with the documented `setup_method` xunit hook.
+      The previous pattern crashed pytest on CPython 3.14
+      (`AttributeError: 'FixtureFunctionDefinition' object has no attribute
+      '__code__'`); `setup_method` runs cleanly on every supported CPython.
+
 --- Assimulo-3.9.0b1 ---
     Beta release of the modernized build system. No functional or API changes
     relative to 3.8.0.
