@@ -1,0 +1,9 @@
+ARG ARCH=x86_64
+FROM quay.io/pypa/manylinux_2_28_${ARCH}
+
+# Build SuperLU_MT and SUNDIALS using the same script as cibuildwheel.
+COPY tools/wheels/build_dependencies.sh /tmp/build_dependencies.sh
+RUN bash /tmp/build_dependencies.sh && rm /tmp/build_dependencies.sh
+
+WORKDIR /src
+CMD ["/bin/bash"]

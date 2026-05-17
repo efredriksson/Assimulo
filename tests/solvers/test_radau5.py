@@ -33,9 +33,7 @@ class Test_Explicit_Radau5_Py:
     """
     Tests the explicit Radau solver (Python implementation).
     """
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This sets up the test case.
         """
@@ -66,17 +64,17 @@ class Test_Explicit_Radau5_Py:
         exp_mod_t0 = Explicit_Problem(f,y0,1.0)
         
         exp_mod.jac = jac
-        cls.mod = exp_mod
+        self.mod = exp_mod
             
         #Define an explicit solver
-        cls.sim = _Radau5ODE(exp_mod) #Create a Radau5 solve
-        cls.sim_t0 = _Radau5ODE(exp_mod_t0)
+        self.sim = _Radau5ODE(exp_mod) #Create a Radau5 solve
+        self.sim_t0 = _Radau5ODE(exp_mod_t0)
         
         #Sets the parameters
-        cls.sim.atol = 1e-4 #Default 1e-6
-        cls.sim.rtol = 1e-4 #Default 1e-6
-        cls.sim.inith = 1.e-4 #Initial step-size
-        cls.sim.usejac = False
+        self.sim.atol = 1e-4 #Default 1e-6
+        self.sim.rtol = 1e-4 #Default 1e-6
+        self.sim.inith = 1.e-4 #Initial step-size
+        self.sim.usejac = False
     
     @pytest.mark.skip("Does not support state events")
     def test_event_localizer(self, extended_problem):
@@ -278,9 +276,7 @@ class Test_Explicit_Radau5:
     """
     Tests the explicit Radau solver.
     """
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This sets up the test case.
         """
@@ -325,18 +321,18 @@ class Test_Explicit_Radau5:
         
         exp_mod.jac = jac
         exp_mod_sp.jac = jac_sparse
-        cls.mod = exp_mod
+        self.mod = exp_mod
             
         #Define an explicit solver
-        cls.sim = Radau5ODE(exp_mod) #Create a Radau5 solve
-        cls.sim_t0 = Radau5ODE(exp_mod_t0)
-        cls.sim_sp = Radau5ODE(exp_mod_sp)
+        self.sim = Radau5ODE(exp_mod) #Create a Radau5 solve
+        self.sim_t0 = Radau5ODE(exp_mod_t0)
+        self.sim_sp = Radau5ODE(exp_mod_sp)
         
         #Sets the parameters
-        cls.sim.atol = 1e-4 #Default 1e-6
-        cls.sim.rtol = 1e-4 #Default 1e-6
-        cls.sim.inith = 1.e-4 #Initial step-size
-        cls.sim.usejac = False
+        self.sim.atol = 1e-4 #Default 1e-6
+        self.sim.rtol = 1e-4 #Default 1e-6
+        self.sim.inith = 1.e-4 #Initial step-size
+        self.sim.usejac = False
 
     def test_event_localizer(self, extended_problem):
         exp_sim = Radau5ODE(extended_problem) #Create the solver
@@ -979,9 +975,7 @@ class Test_Implicit_Radau5:
     """
     Tests the implicit Radau solver.
     """
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This sets up the test case.
         """
@@ -1001,17 +995,17 @@ class Test_Implicit_Radau5:
         yd0 = [-.6,-200000.]
         
         #Define an Assimulo problem
-        cls.mod = Implicit_Problem(f,y0,yd0)
-        cls.mod_t0 = Implicit_Problem(f,y0,yd0,1.0)
+        self.mod = Implicit_Problem(f,y0,yd0)
+        self.mod_t0 = Implicit_Problem(f,y0,yd0,1.0)
             
         #Define an implicit solver
-        cls.sim = Radau5DAE(cls.mod) #Create a Radau5 solve
-        cls.sim_t0 = Radau5DAE(cls.mod_t0)
+        self.sim = Radau5DAE(self.mod) #Create a Radau5 solve
+        self.sim_t0 = Radau5DAE(self.mod_t0)
         
         #Sets the parameters
-        cls.sim.atol = 1e-4 #Default 1e-6
-        cls.sim.rtol = 1e-4 #Default 1e-6
-        cls.sim.inith = 1.e-4 #Initial step-size
+        self.sim.atol = 1e-4 #Default 1e-6
+        self.sim.rtol = 1e-4 #Default 1e-6
+        self.sim.inith = 1.e-4 #Initial step-size
 
     def test_implementation_get(self):
         """
@@ -1260,9 +1254,7 @@ class Test_Implicit_Radau5_Py:
     """
     Tests the implicit Radau solver (Python implementation).
     """
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This sets up the test case.
         """
@@ -1282,17 +1274,17 @@ class Test_Implicit_Radau5_Py:
         yd0 = [-.6,-200000.]
         
         #Define an Assimulo problem
-        cls.mod = Implicit_Problem(f,y0,yd0)
-        cls.mod_t0 = Implicit_Problem(f,y0,yd0,1.0)
+        self.mod = Implicit_Problem(f,y0,yd0)
+        self.mod_t0 = Implicit_Problem(f,y0,yd0,1.0)
             
         #Define an explicit solver
-        cls.sim = _Radau5DAE(cls.mod) #Create a Radau5 solve
-        cls.sim_t0 = _Radau5DAE(cls.mod_t0)
+        self.sim = _Radau5DAE(self.mod) #Create a Radau5 solve
+        self.sim_t0 = _Radau5DAE(self.mod_t0)
         
         #Sets the parameters
-        cls.sim.atol = 1e-4 #Default 1e-6
-        cls.sim.rtol = 1e-4 #Default 1e-6
-        cls.sim.inith = 1.e-4 #Initial step-size
+        self.sim.atol = 1e-4 #Default 1e-6
+        self.sim.rtol = 1e-4 #Default 1e-6
+        self.sim.inith = 1.e-4 #Initial step-size
     
     def test_time_event(self):
         f = lambda t,y,yd: y-yd
@@ -1405,9 +1397,7 @@ class Test_Radau_Common:
     """
     Tests the common attributes of the Radau solvers.
     """
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This sets up the test case.
         """
@@ -1417,7 +1407,7 @@ class Test_Radau_Common:
         #Define an explicit Assimulo problem
         y0 = [2.0,-0.6] #Initial conditions
         exp_mod = Explicit_Problem(f,y0)
-        cls.sim = Radau5ODE(exp_mod)
+        self.sim = Radau5ODE(exp_mod)
 
     def test_fac1(self):
         """

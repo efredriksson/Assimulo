@@ -21,11 +21,9 @@ from assimulo.problem import Explicit_Problem
 from assimulo.exception import AssimuloException
 
 class Test_ODE:
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
-        cls.problem = Explicit_Problem(y0=4.0)
-        cls.simulator = ODE(cls.problem)
+    def setup_method(self):
+        self.problem = Explicit_Problem(y0=4.0)
+        self.simulator = ODE(self.problem)
     
     def test_init(self):
         """

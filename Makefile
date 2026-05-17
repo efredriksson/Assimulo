@@ -1,12 +1,12 @@
-.PHONY: build build-dev-image test shell clean
+.PHONY: build wheel build-dev-image build-manylinux-image test shell compile-deps check-meson.build build-dev wheel-portable wheel-cibw
+DOCKER_IMAGE      := assimulo-dev
+MANYLINUX_IMAGE   := assimulo-manylinux
+MESON_BUILD_DIR   := builddir
+PYTHON_VERSIONS   ?= 3.12
+IN_DOCKER_IMG     := $(shell test -f /.dockerenv && echo 1 || echo 0)
 
-SUNDIALS_VERSION ?= 2.7.0
-DOCKER_IMAGE := assimulo-dev-sundials_$(SUNDIALS_VERSION)
-
-IN_DOCKER_IMG := $(shell test -f /.dockerenv && echo 1 || echo 0)
-
-FORTRAN_FLAGS := "-std=legacy"
-SETUPTOOLS_JFLAG=-j$(shell nproc)
+MESON_SETUP_ARGS := -Dsundials_prefix=/usr -Dsuperlu_prefix=/usr -Dopenmp=true
+PIP_SETUP_ARGS   := $(addprefix -Csetup-args=,$(MESON_SETUP_ARGS))
 
 define _run
 	@if [ $(IN_DOCKER_IMG) -eq 1 ]; then \
@@ -15,26 +15,61 @@ define _run
 		docker run \
 		--rm $(2) \
 		-v $(CURDIR):/src \
-		$(DOCKER_IMAGE) \
+		${DOCKER_IMAGE} \
 		$(1); \
 	fi
 endef
 
-build-dev-image:
-	docker build --build-arg SUNDIALS_VERSION=$(SUNDIALS_VERSION) -t $(DOCKER_IMAGE) .
+define _run_with_venv
+	$(call _run, bash -c '. .venv/bin/activate && $(1)')
+endef
 
-.venv:
-	$(call _run, python3.11 -m venv .venv --system-site-packages)
-	$(call _run, pip install pytest)
+build-dev-image:
+	docker build -t ${DOCKER_IMAGE} .
+
+build-manylinux-image:
+	docker build -f Dockerfile.manylinux -t ${MANYLINUX_IMAGE} .
+
+.venv: requirements.lock
+	$(call _run, python3 -m venv .venv)
+	$(call _run_with_venv, pip install -r requirements.lock)
+	$(call _run, touch .venv)
 
 build: .venv
-	$(call _run, python3.11 setup.py build_ext ${SETUPTOOLS_JFLAG} install --sundials-home=/usr --blas-home=/usr/lib/x86_64-linux-gnu/ --lapack-home=/usr/lib/x86_64-linux-gnu/ --superlu-home=/usr --extra-fortran-compile-flags=$(FORTRAN_FLAGS))
+	$(call _run_with_venv, pip install . -v $(PIP_SETUP_ARGS))
 
-test: build
-	$(call _run, pytest)
+wheel: .venv
+	$(call _run_with_venv, pip wheel . --no-deps $(PIP_SETUP_ARGS) -w dist)
+
+build-dev: .venv
+	$(call _run_with_venv, pip install --no-build-isolation -e . -v -Cbuild-dir=$(MESON_BUILD_DIR) $(PIP_SETUP_ARGS))
+
+test: .venv
+	$(call _run_with_venv, pytest)
 
 shell:
-	$(call _run, /bin/bash,-it)
+	$(call _run, /bin/bash, -it)
 
-clean:
-	rm -rf build/
+check-meson.build: .venv
+	$(call _run_with_venv, meson setup $(MESON_BUILD_DIR) $(MESON_SETUP_ARGS) --wipe)
+
+# Regenerate requirements.lock from pyproject.toml. Run after changing
+# build-system requires or runtime dependencies; commit the resulting file.
+compile-deps:
+	$(call _run, uv pip compile --python python3 --group=dev --output-file=requirements.lock pyproject.toml)
+
+wheel-cibw:
+	pip install cibuildwheel
+	cibuildwheel --platform linux --output-dir dist/
+
+wheel-portable:
+	mkdir -p dist
+	docker run --rm -v $(CURDIR):/src $(MANYLINUX_IMAGE) bash -c '\
+		mkdir -p /src/dist/raw; \
+		for pyver in $(PYTHON_VERSIONS); do \
+			pydir="cp$${pyver//./}-cp$${pyver//./}"; \
+			/opt/python/$$pydir/bin/pip wheel /src --no-deps $(PIP_SETUP_ARGS) -w /src/dist/raw; \
+		done; \
+		for whl in /src/dist/raw/assimulo-*.whl; do \
+			auditwheel repair $$whl --plat manylinux_2_27_x86_64 -w /src/dist; \
+		done'

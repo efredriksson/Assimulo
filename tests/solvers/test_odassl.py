@@ -23,9 +23,7 @@ import numpy as np
 
 class Test_ODASSL:
     
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This function sets up the test case.
         """
@@ -33,8 +31,8 @@ class Test_ODASSL:
         y0 = [1.0, 1.0, 1.0]
         yd0 = [-1.0, -1.0, -1.0]
         
-        cls.problem = Overdetermined_Problem(f,y0, yd0)
-        cls.simulator = ODASSL(cls.problem)
+        self.problem = Overdetermined_Problem(f,y0, yd0)
+        self.simulator = ODASSL(self.problem)
     
     def test_overdetermined(self):
         f = lambda t,y,yd: np.hstack((yd + 1, yd +1))

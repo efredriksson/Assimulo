@@ -1,4 +1,54 @@
 --- CHANGELOG ---
+--- Assimulo-3.9.0b2 ---
+    Second beta of the modernized build system. No functional or API changes
+    relative to 3.9.0b1.
+
+    Packaging and distribution:
+    * Wheel matrix expanded to CPython 3.14 and Linux aarch64
+      (ubuntu-22.04-arm runners). Pull requests build cp311 + cp314 on
+      Linux x86_64 and Windows; master/tag/workflow_dispatch builds the
+      full matrix.
+    * wheels.yml restructured: a `config` job emits the matrix as JSON and
+      the linux/windows jobs consume it via fromJSON, working around the
+      fact that the `matrix` context is not available in `jobs.<id>.if`.
+
+    Tests:
+    * Replaced the non-idiomatic `@classmethod` + `@pytest.fixture(autouse=True)`
+      stack on `setup_class` with the documented `setup_method` xunit hook.
+      The previous pattern crashed pytest on CPython 3.14
+      (`AttributeError: 'FixtureFunctionDefinition' object has no attribute
+      '__code__'`); `setup_method` runs cleanly on every supported CPython.
+
+--- Assimulo-3.9.0b1 ---
+    Beta release of the modernized build system. No functional or API changes
+    relative to 3.8.0.
+
+    Build system:
+    * Switched from distutils/setup.py to meson-python (PEP 517 build backend).
+    * Bumped minimum requirements: Python >= 3.11, NumPy >= 2.1, SciPy >= 1.14,
+      Cython >= 3.0.7.
+    * Build configuration is now declared in pyproject.toml + meson.build +
+      meson.options.
+    * Fortran solvers (Radau5, Dopri5, Rodas, Odassl, Odepack, Dasp3, Glimda,
+      Kvaernoe) are now wrapped via numpy.f2py invoked from meson; the previous
+      f2py glue has been replaced by tools/f2py_wrapper.py.
+    * SUNDIALS is sourced from the Modelon SUNDIALS fork as the canonical
+      dependency; CVode and IDA are statically linked into the wrapper modules
+      by default.
+    * BLAS/LAPACK unified to dynamic OpenBLAS on both Linux and Windows.
+    * SuperLU support enabled on Windows wheels.
+    * Examples directory moved under src/assimulo for consistency with the
+      installed package layout.
+
+    Packaging and distribution:
+    * Added manylinux and Windows wheel builds via cibuildwheel.
+    * Added GitHub Actions workflow (.github/workflows/wheels.yml) for building
+      and publishing wheels to PyPI via a Trusted Publisher.
+    * Added Docker images for reproducible local builds (Dockerfile,
+      Dockerfile.manylinux) and a Makefile target for incremental development
+      builds.
+    * Added RELEASING.md describing the manual release procedure.
+
 --- Assimulo-3.8.0---
     * Enabled interpolated output support for ExplicitEuler and ImplicitEuler.
     

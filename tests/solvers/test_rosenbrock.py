@@ -25,9 +25,7 @@ import scipy.sparse as sps
 float_regex = r"[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Test_RodasODE:
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         #Define the rhs
         def f(t,y):
             eps = 1.e-6
@@ -63,8 +61,8 @@ class Test_RodasODE:
         exp_mod_sp = Explicit_Problem(f,y0, name = 'Van der Pol (explicit)')
         exp_mod.jac = jac
         exp_mod_sp.jac = jac_sparse
-        cls.mod = exp_mod
-        cls.mod_sp = exp_mod_sp
+        self.mod = exp_mod
+        self.mod_sp = exp_mod_sp
     
     def test_nbr_fcn_evals_due_to_jac(self):
         sim = RodasODE(self.mod)
