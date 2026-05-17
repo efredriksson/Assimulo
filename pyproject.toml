@@ -49,10 +49,10 @@ dev = [
 # cibuildwheel configuration
 # ---------------------------------------------------------------------------
 [tool.cibuildwheel]
-build = "cp311-* cp312-* cp313-*"
+build = "cp311-* cp312-* cp313-* cp314-*"
 skip  = "*-win32 *-manylinux_i686 *-musllinux*"
 # Smoke each built wheel against pytest before it leaves the runner.
-# Runs for every built CPython (3.11/3.12/3.13) on both Linux and Windows.
+# Runs for every built CPython (3.11/3.12/3.13/3.14) on both Linux and Windows.
 # test-groups pulls the `test` dependency group from [dependency-groups]
 # above, keeping pytest's pin in a single place.
 test-groups   = ["test"]

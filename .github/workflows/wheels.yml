@@ -20,19 +20,64 @@ permissions:
   contents: read
 
 jobs:
+  # Picks a small matrix for PRs and a full matrix for everything else.
+  # The `matrix` context is not available in `jobs.<id>.if`, so the
+  # row selection cannot be done inline on the build jobs.
+  config:
+    name: Resolve matrix
+    runs-on: ubuntu-latest
+    outputs:
+      linux:   ${{ steps.set.outputs.linux }}
+      windows: ${{ steps.set.outputs.windows }}
+    steps:
+      - id: set
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            LINUX='[
+              {"arch":"x86_64","runner":"ubuntu-latest","python":"cp311"},
+              {"arch":"x86_64","runner":"ubuntu-latest","python":"cp314"}
+            ]'
+            WINDOWS='[
+              {"arch":"amd64","python":"cp311"},
+              {"arch":"amd64","python":"cp314"}
+            ]'
+          else
+            LINUX='[
+              {"arch":"x86_64", "runner":"ubuntu-latest",   "python":"cp311"},
+              {"arch":"x86_64", "runner":"ubuntu-latest",   "python":"cp312"},
+              {"arch":"x86_64", "runner":"ubuntu-latest",   "python":"cp313"},
+              {"arch":"x86_64", "runner":"ubuntu-latest",   "python":"cp314"},
+              {"arch":"aarch64","runner":"ubuntu-22.04-arm","python":"cp311"},
+              {"arch":"aarch64","runner":"ubuntu-22.04-arm","python":"cp312"},
+              {"arch":"aarch64","runner":"ubuntu-22.04-arm","python":"cp313"},
+              {"arch":"aarch64","runner":"ubuntu-22.04-arm","python":"cp314"}
+            ]'
+            WINDOWS='[
+              {"arch":"amd64","python":"cp311"},
+              {"arch":"amd64","python":"cp312"},
+              {"arch":"amd64","python":"cp313"},
+              {"arch":"amd64","python":"cp314"}
+            ]'
+          fi
+          {
+            echo "linux<<EOF"
+            echo "$LINUX"
+            echo "EOF"
+            echo "windows<<EOF"
+            echo "$WINDOWS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
   linux:
     name: Linux ${{ matrix.arch }} (${{ matrix.python }})
-    # Skip `on: master` rows on PRs for fast feedback.
-    if: matrix.on == 'all' || github.event_name != 'pull_request'
+    needs: config
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { arch: x86_64, runner: ubuntu-latest, python: cp311, on: all }
-          - { arch: x86_64, runner: ubuntu-latest, python: cp312, on: master }
-          - { arch: x86_64, runner: ubuntu-latest, python: cp313, on: master }
+        include: ${{ fromJSON(needs.config.outputs.linux) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -51,7 +96,7 @@ jobs:
       - run: pip install cibuildwheel
 
       - name: Build manylinux image (SuperLU + SUNDIALS pre-installed)
-        run: docker build -f Dockerfile.manylinux -t assimulo-manylinux .
+        run: docker build --build-arg ARCH=${{ matrix.arch }} -f Dockerfile.manylinux -t assimulo-manylinux .
 
       - name: Build wheel
         env:
@@ -65,17 +110,13 @@ jobs:
 
   windows:
     name: Windows ${{ matrix.arch }} (${{ matrix.python }})
-    # Skip `on: master` rows on PRs for fast feedback.
-    if: matrix.on == 'all' || github.event_name != 'pull_request'
+    needs: config
     runs-on: windows-2022
     timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { arch: amd64, python: cp311, on: all }
-          - { arch: amd64, python: cp312, on: master }
-          - { arch: amd64, python: cp313, on: master }
+        include: ${{ fromJSON(needs.config.outputs.windows) }}
     steps:
       - uses: actions/checkout@v4
 
