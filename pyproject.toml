@@ -72,6 +72,7 @@ config-settings = {"setup-args" = ["-Dsundials_prefix=C:/deps", "-Dsuperlu_prefi
 # The official manylinux images are intentionally stripped of their package
 # manager, so before-all cannot install system packages.
 # Build the image first: make build-manylinux-image
-manylinux-x86_64-image = "assimulo-manylinux"
+manylinux-x86_64-image  = "assimulo-manylinux"
+manylinux-aarch64-image = "assimulo-manylinux"
 repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
 config-settings = {"setup-args" = ["-Dsundials_prefix=/usr", "-Dsuperlu_prefix=/usr", "-Dopenmp=true"]}
