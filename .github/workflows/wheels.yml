@@ -1,0 +1,154 @@
+name: Build wheels
+
+on:
+  push:
+    branches: [master, main, beta]
+    tags: ['*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish wheels to PyPI after building"
+        type: boolean
+        default: false
+      test_release:
+        description: "When publishing, rewrite the package name to assimulo-testing (fork-only; remove before merging upstream)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: Linux ${{ matrix.arch }} (${{ matrix.python }})
+    # Skip `on: master` rows on PRs for fast feedback.
+    if: matrix.on == 'all' || github.event_name != 'pull_request'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x86_64, runner: ubuntu-latest, python: cp311, on: all }
+          - { arch: x86_64, runner: ubuntu-latest, python: cp312, on: master }
+          - { arch: x86_64, runner: ubuntu-latest, python: cp313, on: master }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rewrite package name to assimulo-testing
+        if: github.event_name == 'workflow_dispatch' && inputs.publish && inputs.test_release
+        run: |
+          sed -i 's/^name = "Assimulo"$/name = "assimulo-testing"/' pyproject.toml
+          sed -i "s/^  'Assimulo',$/  'assimulo-testing',/" meson.build
+          grep '^name = ' pyproject.toml
+          grep -n "assimulo-testing" meson.build
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install cibuildwheel
+
+      - name: Build manylinux image (SuperLU + SUNDIALS pre-installed)
+        run: docker build -f Dockerfile.manylinux -t assimulo-manylinux .
+
+      - name: Build wheel
+        env:
+          CIBW_BUILD: "${{ matrix.python }}-*"
+        run: cibuildwheel --platform linux --output-dir dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.arch }}-${{ matrix.python }}
+          path: dist/*.whl
+
+  windows:
+    name: Windows ${{ matrix.arch }} (${{ matrix.python }})
+    # Skip `on: master` rows on PRs for fast feedback.
+    if: matrix.on == 'all' || github.event_name != 'pull_request'
+    runs-on: windows-2022
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: amd64, python: cp311, on: all }
+          - { arch: amd64, python: cp312, on: master }
+          - { arch: amd64, python: cp313, on: master }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rewrite package name to assimulo-testing
+        if: github.event_name == 'workflow_dispatch' && inputs.publish && inputs.test_release
+        shell: bash
+        run: |
+          sed -i 's/^name = "Assimulo"$/name = "assimulo-testing"/' pyproject.toml
+          sed -i "s/^  'Assimulo',$/  'assimulo-testing',/" meson.build
+          grep '^name = ' pyproject.toml
+          grep -n "assimulo-testing" meson.build
+
+      - name: Set up MSYS2 UCRT64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-gcc-fortran
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-pkg-config
+
+      - name: Build SUNDIALS
+        shell: msys2 {0}
+        run: bash tools/wheels/build_dependencies_windows.sh
+
+      # Add UCRT64 and SUNDIALS to PATH so cibuildwheel/meson find gcc and DLLs.
+      # Set CC/CXX/FC so meson uses MSYS2 GCC instead of MSVC.
+      - name: Configure compiler environment
+        shell: pwsh
+        run: |
+          echo "C:\msys64\ucrt64\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+          echo "C:\deps\bin"          | Out-File -FilePath $env:GITHUB_PATH -Append
+          echo "CC=gcc"               | Out-File -FilePath $env:GITHUB_ENV  -Append
+          echo "CXX=g++"              | Out-File -FilePath $env:GITHUB_ENV  -Append
+          echo "FC=gfortran"          | Out-File -FilePath $env:GITHUB_ENV  -Append
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install cibuildwheel
+        shell: pwsh
+
+      - name: Build wheel
+        shell: pwsh
+        env:
+          CIBW_BUILD: "${{ matrix.python }}-*"
+        run: cibuildwheel --platform windows --output-dir dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows-${{ matrix.arch }}-${{ matrix.python }}
+          path: dist/*.whl
+
+  upload_pypi:
+    name: Upload to PyPI
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: pypi
+      url: https://pypi.org/p/Assimulo
+    permissions:
+      id-token: write  # required for OIDC Trusted Publisher
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist/
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1

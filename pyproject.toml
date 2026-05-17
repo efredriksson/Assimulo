@@ -44,3 +44,34 @@ dev = [
     "ninja",
     "Cython>=3.0.7",
 ]
+
+# ---------------------------------------------------------------------------
+# cibuildwheel configuration
+# ---------------------------------------------------------------------------
+[tool.cibuildwheel]
+build = "cp311-* cp312-* cp313-*"
+skip  = "*-win32 *-manylinux_i686 *-musllinux*"
+# Smoke each built wheel against pytest before it leaves the runner.
+# Runs for every built CPython (3.11/3.12/3.13) on both Linux and Windows.
+# test-groups pulls the `test` dependency group from [dependency-groups]
+# above, keeping pytest's pin in a single place.
+test-groups   = ["test"]
+test-command  = "pytest {project}/tests"
+
+[tool.cibuildwheel.windows]
+# SUNDIALS is built in the GHA workflow (tools/wheels/build_dependencies_windows.sh)
+# using MSYS2 UCRT64 before cibuildwheel runs. MSYS2 bin dirs are added to PATH
+# so meson picks up gcc/gfortran instead of MSVC.
+before-build = "pip install delvewheel"
+repair-wheel-command = "pwsh {project}/tools/wheels/repair_windows.ps1 {wheel} {dest_dir}"
+config-settings = {"setup-args" = ["-Dsundials_prefix=C:/deps", "-Dsuperlu_prefix=C:/deps", "-Dopenmp=true"]}
+
+[tool.cibuildwheel.linux]
+# Use the pre-built assimulo-manylinux image which has SuperLU + SUNDIALS already
+# compiled (via Dockerfile.manylinux → tools/wheels/build_dependencies.sh).
+# The official manylinux images are intentionally stripped of their package
+# manager, so before-all cannot install system packages.
+# Build the image first: make build-manylinux-image
+manylinux-x86_64-image = "assimulo-manylinux"
+repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
+config-settings = {"setup-args" = ["-Dsundials_prefix=/usr", "-Dsuperlu_prefix=/usr", "-Dopenmp=true"]}
