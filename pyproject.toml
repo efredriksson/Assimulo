@@ -1,0 +1,46 @@
+[build-system]
+requires = [
+    "meson-python>=0.16",
+    "meson>=1.4",
+    "ninja",
+    "Cython>=3.0.7",
+    "numpy>=2.1",
+]
+build-backend = "mesonpy"
+
+[project]
+name = "Assimulo"
+dynamic = ["version"]
+description = "A package for solving ordinary and differential-algebraic equations."
+readme = "README.md"
+license = { text = "LGPL-3.0-only" }
+authors = [{ name = "Modelon AB" }]
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+]
+
+dependencies = [
+    "numpy>=2.1",
+    "scipy>=1.14.0",
+    "matplotlib>=3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/modelon-community/Assimulo"
+
+[dependency-groups]
+test = ["pytest>=7.4.4"]
+dev = [
+    {include-group = "test"},
+    "meson>=1.4",
+    "meson-python>=0.16",
+    "ninja",
+    "Cython>=3.0.7",
+]
