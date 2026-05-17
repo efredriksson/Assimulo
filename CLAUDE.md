@@ -16,11 +16,17 @@ Python/Cython library providing a unified interface to ODE and DAE solvers. Solv
 
 ## Build
 
+Build backend is `meson-python`; options in `meson.options`. All targets run inside Docker.
+
 ```
-make build
+make build        # full install into .venv
+make build-dev    # incremental editable install (keeps builddir/)
+make check-meson.build  # validate meson config without building
 ```
 
-Runs inside Docker (builds a dev image if needed). Dependencies: Python ≥ 3.9, NumPy ≥ 1.19.5, SciPy ≥ 1.10.1, Cython ≥ 3.0.7, SUNDIALS v2.7.0.
+Dependencies: Python ≥ 3.11, NumPy ≥ 2.1, SciPy ≥ 1.14, Cython ≥ 3.0.7, SUNDIALS v2.7.0. Linux requires `libopenblas-dev`; Windows links BLAS statically.
+
+Fortran solvers are wrapped via `tools/f2py_wrapper.py` (generates C glue from `.pyf` files).
 
 ## Testing
 
