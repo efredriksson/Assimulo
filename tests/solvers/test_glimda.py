@@ -26,9 +26,7 @@ class Test_GLIMDA:
     """
     Tests the GLIMDA solver.
     """
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This sets up the test case.
         """
@@ -48,17 +46,17 @@ class Test_GLIMDA:
         yd0 = [-.6,-200000.]
         
         #Define an Assimulo problem
-        cls.mod = Implicit_Problem(f,y0,yd0)
-        cls.mod_t0 = Implicit_Problem(f,y0,yd0,1.0)
+        self.mod = Implicit_Problem(f,y0,yd0)
+        self.mod_t0 = Implicit_Problem(f,y0,yd0,1.0)
             
         #Define an explicit solver
-        cls.sim = GLIMDA(cls.mod) #Create a Radau5 solve
-        cls.sim_t0 = GLIMDA(cls.mod_t0)
+        self.sim = GLIMDA(self.mod) #Create a Radau5 solve
+        self.sim_t0 = GLIMDA(self.mod_t0)
         
         #Sets the parameters
-        cls.sim.atol = 1e-4 #Default 1e-6
-        cls.sim.rtol = 1e-4 #Default 1e-6
-        cls.sim.inith = 1.e-4 #Initial step-size
+        self.sim.atol = 1e-4 #Default 1e-6
+        self.sim.rtol = 1e-4 #Default 1e-6
+        self.sim.inith = 1.e-4 #Initial step-size
     
     def test_simulate_explicit(self):
         """

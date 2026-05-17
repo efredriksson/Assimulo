@@ -25,17 +25,15 @@ float_regex = r"[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Test_Dopri5:
     
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This function sets up the test case.
         """
         f = lambda t,y:1.0
         y0 = 1
         
-        cls.problem = Explicit_Problem(f,y0)
-        cls.simulator = Dopri5(cls.problem)
+        self.problem = Explicit_Problem(f,y0)
+        self.simulator = Dopri5(self.problem)
     
     def test_integrator(self):
         """
@@ -121,17 +119,15 @@ class Test_Dopri5:
 
 class Test_RungeKutta34:
     
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This function sets up the test case.
         """
         f = lambda t,y:1.0
         y0 = 1
         
-        cls.problem = Explicit_Problem(f,y0)
-        cls.simulator = RungeKutta34(cls.problem)
+        self.problem = Explicit_Problem(f,y0)
+        self.simulator = RungeKutta34(self.problem)
     
     def test_integrator(self):
         """
@@ -252,17 +248,15 @@ class Test_RungeKutta34:
 
 class Test_RungeKutta4:
     
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This function sets up the test case.
         """ 
         f = lambda t,y:1.0
         y0 = 1
         
-        cls.problem = Explicit_Problem(f,y0)
-        cls.simulator = RungeKutta4(cls.problem)
+        self.problem = Explicit_Problem(f,y0)
+        self.simulator = RungeKutta4(self.problem)
     
     def test_time_event(self):
         f = lambda t,y: [1.0]

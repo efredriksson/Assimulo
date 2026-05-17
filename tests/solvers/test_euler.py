@@ -27,17 +27,15 @@ float_regex = r"[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Test_Explicit_Euler:
     
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This function sets up the test case.
         """
         f = lambda t,y: 1.0
         y0 = 1.0
         
-        cls.problem = Explicit_Problem(f, y0)
-        cls.simulator = ExplicitEuler(cls.problem)
+        self.problem = Explicit_Problem(f, y0)
+        self.simulator = ExplicitEuler(self.problem)
     
     def test_event_localizer(self, extended_problem):
         exp_sim = ExplicitEuler(extended_problem) #Create the solver
@@ -181,17 +179,15 @@ class Test_Explicit_Euler:
 
 class Test_Implicit_Euler:
     
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This function sets up the test case.
         """
         f = lambda t,y: 1.0
         y0 = 1.0
         
-        cls.problem = Explicit_Problem(f, y0)
-        cls.simulator = ImplicitEuler(cls.problem)
+        self.problem = Explicit_Problem(f, y0)
+        self.simulator = ImplicitEuler(self.problem)
     
     def test_reset_statistics(self):
         assert self.simulator.statistics["nsteps"] == 0

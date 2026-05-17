@@ -32,9 +32,7 @@ class Test_LSODAR:
     """
     Tests the LSODAR solver.
     """
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This sets up the test case.
         """
@@ -79,16 +77,16 @@ class Test_LSODAR:
         
         exp_mod.jac = jac
         exp_mod_sp.jac = jac_sparse
-        cls.mod = exp_mod
+        self.mod = exp_mod
             
         #Define an explicit solver
-        cls.sim = LSODAR(exp_mod) #Create a LSODAR solve
-        cls.sim_sp = LSODAR(exp_mod_sp)
+        self.sim = LSODAR(exp_mod) #Create a LSODAR solve
+        self.sim_sp = LSODAR(exp_mod_sp)
         
         #Sets the parameters
-        cls.sim.atol = 1e-6 #Default 1e-6
-        cls.sim.rtol = 1e-6 #Default 1e-6
-        cls.sim.usejac = False
+        self.sim.atol = 1e-6 #Default 1e-6
+        self.sim.rtol = 1e-6 #Default 1e-6
+        self.sim.usejac = False
 
     def test_event_localizer(self, extended_problem):
         exp_sim = LSODAR(extended_problem) #Create the solver

@@ -26,18 +26,16 @@ import scipy.sparse as sps
 
 class Test_CVode:
     
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This function sets up the test case.
         """
         f = lambda t,y:np.array(y)
         y0 = [1.0]
         
-        cls.problem = Explicit_Problem(f,y0)
-        cls.simulator = CVode(cls.problem)
-        cls.simulator.verbosity = 0
+        self.problem = Explicit_Problem(f,y0)
+        self.simulator = CVode(self.problem)
+        self.simulator.verbosity = 0
     
     def test_backward_integration(self):
         def f(t, y):
@@ -906,9 +904,7 @@ class Test_CVode:
 
 class Test_IDA:
     
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This function sets up the test case.
         """
@@ -916,8 +912,8 @@ class Test_IDA:
         y0 = [1.0]
         yd0 = [1.0]
         
-        cls.problem = Implicit_Problem(f,y0,yd0)
-        cls.simulator = IDA(cls.problem)
+        self.problem = Implicit_Problem(f,y0,yd0)
+        self.simulator = IDA(self.problem)
     
     def test_time_limit(self):
         f = lambda t,y,yd: yd-y
@@ -1370,9 +1366,7 @@ class Test_IDA:
 
 class Test_Sundials:
     
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
+    def setup_method(self):
         """
         This sets up the test case.
         """
@@ -1393,7 +1387,7 @@ class Test_Sundials:
 
         f = Prob_CVode()
         
-        cls.simulators = [IDA(res), CVode(f)]
+        self.simulators = [IDA(res), CVode(f)]
         
         
         f = lambda t,y,yd,p: np.array([0.0])
@@ -1402,7 +1396,7 @@ class Test_Sundials:
         p0 = [1.0]
         
         mod = Implicit_Problem(f, y0,yd0,p0=p0)
-        cls.sim = IDA(mod)
+        self.sim = IDA(mod)
     
     def test_atol(self):
         """

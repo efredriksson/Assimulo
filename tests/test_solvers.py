@@ -32,16 +32,14 @@ def handle_event(solver, event_info):
     pass
 
 class Test_Solvers:
-    @classmethod
-    @pytest.fixture(autouse=True)
-    def setup_class(cls):
-        cls.problem = Implicit_Problem(res, [1.0], [-1.0])
-        cls.problem.state_events = state_events
-        cls.problem.handle_event = handle_event
+    def setup_method(self):
+        self.problem = Implicit_Problem(res, [1.0], [-1.0])
+        self.problem.state_events = state_events
+        self.problem.handle_event = handle_event
 
-        cls.eproblem = Explicit_Problem(rhs, [1.0])
-        cls.eproblem.state_events = estate_events
-        cls.eproblem.handle_event = handle_event
+        self.eproblem = Explicit_Problem(rhs, [1.0])
+        self.eproblem.state_events = estate_events
+        self.eproblem.handle_event = handle_event
     
     def test_radau5dae_state_events(self):
         solver = Radau5DAE(self.problem)
